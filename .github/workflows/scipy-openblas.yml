@@ -12,6 +12,10 @@ on:
         required: true
         default: 'v0.3.28'
 
+env:
+  REPO_DIR: OpenBLAS
+  OPENBLAS_COMMIT: ${{ github.event.inputs.openblas_version }}
+
 jobs:
   build:
     runs-on: ${{ matrix.os }}
@@ -38,7 +42,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          repository: loong64/openblas-libs
+          repository: MacPython/openblas-libs
           ref: ${{ github.event.inputs.app_version }}
           submodules: recursive
           fetch-depth: 0

@@ -19,19 +19,24 @@ runs:
         mkdir -p /tmp/tools /tmp/cache
         wget -O - https://github.com/loong64/pypi/archive/refs/heads/master.tar.gz | tar xz --strip-components=1 -C /tmp/tools
     
-    - name: Check abi
-      id: check-abi
+    - name: Check environment
+      id: check-env
       shell: bash
       run: |
         CIBW_BUILD=""
+        CIBW_ENVIRONMENT_CUSTOM=""
         CIBW_PROJECT_REQUIRES_PYTHON=""
         if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi" ]; then
           CIBW_BUILD=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi")
+        fi
+        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/env" ]; then
+          CIBW_ENVIRONMENT_CUSTOM=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/env")
         fi
         if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python" ]; then
           CIBW_PROJECT_REQUIRES_PYTHON=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python")
         fi
         echo "CIBW_BUILD=${CIBW_BUILD}" >> $GITHUB_OUTPUT
+        echo "CIBW_ENVIRONMENT_CUSTOM=${CIBW_ENVIRONMENT_CUSTOM}" >> $GITHUB_OUTPUT
         echo "CIBW_PROJECT_REQUIRES_PYTHON=${CIBW_PROJECT_REQUIRES_PYTHON}" >> $GITHUB_OUTPUT
 
     - name: Get sdist
@@ -74,10 +79,10 @@ runs:
       env:
         CIBW_MANYLINUX_LOONGARCH64_IMAGE: manylinux_2_38
         CIBW_ARCHS: loongarch64
-        CIBW_BUILD: ${{ steps.check-abi.outputs.CIBW_BUILD }}
+        CIBW_BUILD: ${{ steps.check-env.outputs.CIBW_BUILD }}
         CIBW_SKIP: "pp* *-musllinux_*"
         CIBW_TEST_SKIP: "*"
-        CIBW_PROJECT_REQUIRES_PYTHON: ${{ steps.check-abi.outputs.CIBW_PROJECT_REQUIRES_PYTHON }}
+        CIBW_PROJECT_REQUIRES_PYTHON: ${{ steps.check-env.outputs.CIBW_PROJECT_REQUIRES_PYTHON }}
         CIBW_BEFORE_ALL_LINUX: >
           if [ -f /host/tmp/tools/build-ci.sh ]; then bash /host/tmp/tools/build-ci.sh; fi
         CIBW_ENVIRONMENT_LINUX: >
@@ -85,3 +90,5 @@ runs:
           APP_VERSION=${{ inputs.app_version }}
           PATH="$HOME/.cargo/bin:$PATH"
           PIP_INDEX_URL="https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple"
+          ${{ steps.check-env.outputs.CIBW_ENVIRONMENT_CUSTOM }}
+          
