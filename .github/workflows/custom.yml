@@ -1,0 +1,31 @@
+name: Custom Build Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: 'Package name to build'
+        required: true
+      app_version:
+        description: 'Package version'
+        required: true
+        default: ''
+
+jobs:
+  build:
+    name: 'Build ${{ github.event.inputs.app_name }} ${{ github.event.inputs.app_version }}'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Package
+        uses: loong64/pypi@master
+        with:
+          app_name: ${{ github.event.inputs.app_name }}
+          app_version: ${{ github.event.inputs.app_version }}
+
+      - name: Upload wheels
+        run: |
+          pip install twine
+          twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi wheelhouse/*.whl
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}

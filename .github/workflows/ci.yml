@@ -1,0 +1,43 @@
+name: Auto Build Packages
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.set-packages.outputs.packages }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: set-packages
+        run: |
+          cd project || exit 1
+          PACKAGES=$(ls -d */ | sed 's#/##' | jq -R -s -c 'split("\n")[:-1]')
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+
+  build:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: ${{ fromJson(needs.prepare.outputs.packages) }}
+    steps:
+      - name: Build Package
+        uses: loong64/pypi@master
+        with:
+          app_name: ${{ matrix.package }}
+          app_version: 'latest'
+
+      - name: Upload wheels
+        run: |
+          pip install twine
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}

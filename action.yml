@@ -1,0 +1,87 @@
+name: 'Build Any Package'
+description: 'Build any Python package for loongarch64'
+
+inputs:
+  app_name:
+    description: 'Package name to build'
+    required: true
+  app_version:
+    description: 'Package version'
+    required: false
+    default: 'latest'
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout tools
+      shell: bash
+      run: |
+        mkdir -p /tmp/tools /tmp/cache
+        wget -O - https://github.com/loong64/pypi/archive/refs/heads/master.tar.gz | tar xz --strip-components=1 -C /tmp/tools
+    
+    - name: Check abi
+      id: check-abi
+      shell: bash
+      run: |
+        CIBW_BUILD=""
+        CIBW_PROJECT_REQUIRES_PYTHON=""
+        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi" ]; then
+          CIBW_BUILD=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi")
+        fi
+        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python" ]; then
+          CIBW_PROJECT_REQUIRES_PYTHON=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python")
+        fi
+        echo "CIBW_BUILD=${CIBW_BUILD}" >> $GITHUB_OUTPUT
+        echo "CIBW_PROJECT_REQUIRES_PYTHON=${CIBW_PROJECT_REQUIRES_PYTHON}" >> $GITHUB_OUTPUT
+
+    - name: Get sdist
+      id: check-build
+      shell: bash
+      run: |
+        package=${{ inputs.app_name }}
+        version=${{ inputs.app_version }}
+        if [ "$version" = "latest" ]; then
+          version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+        fi
+        echo "Building package: ${package} version: ${version}"
+        download_url=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+        if [ -z "$download_url" ]; then
+          echo "Error: Could not find sdist package for ${package} ${version}"
+          exit 1
+        fi
+        if curl https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package} | grep "${version}"; then
+          echo "Package ${package} ${version} already exists"
+          echo "BUILD=false" >> $GITHUB_OUTPUT
+        fi
+        wget -O - "$download_url" | tar xz --strip-components=1
+
+    - name: Setup QEMU
+      if: steps.check-build.outputs.BUILD != 'false'
+      shell: bash
+      run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
+
+    - name: Check Custom Build
+      if: steps.check-build.outputs.BUILD != 'false'
+      shell: bash
+      run: |
+        if [ -f /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/scripts/prepare.sh ]; then
+          bash /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/scripts/prepare.sh
+        fi
+
+    - name: Build wheels
+      if: steps.check-build.outputs.BUILD != 'false'
+      uses: loong64/cibuildwheel@main
+      env:
+        CIBW_MANYLINUX_LOONGARCH64_IMAGE: manylinux_2_38
+        CIBW_ARCHS: loongarch64
+        CIBW_BUILD: ${{ steps.check-abi.outputs.CIBW_BUILD }}
+        CIBW_SKIP: "pp* *-musllinux_*"
+        CIBW_TEST_SKIP: "*"
+        CIBW_PROJECT_REQUIRES_PYTHON: ${{ steps.check-abi.outputs.CIBW_PROJECT_REQUIRES_PYTHON }}
+        CIBW_BEFORE_ALL_LINUX: >
+          if [ -f /host/tmp/tools/build-ci.sh ]; then bash /host/tmp/tools/build-ci.sh; fi
+        CIBW_ENVIRONMENT_LINUX: >
+          APP_NAME=${{ inputs.app_name }}
+          APP_VERSION=${{ inputs.app_version }}
+          PATH="$HOME/.cargo/bin:$PATH"
+          PIP_INDEX_URL="https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple"
