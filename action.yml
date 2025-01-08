@@ -60,6 +60,16 @@ runs:
         fi
         wget -O - "$download_url" | tar xz --strip-components=1
 
+    - name: Cache build
+      uses: actions/cache@v4
+      if: steps.check-build.outputs.BUILD != 'false'
+      with:
+        path: |
+          /home/runner/data/cache
+        key: ${{ runner.os }}-${{ inputs.app_name }}-${{ inputs.app_version }}
+        restore-keys: |
+          ${{ runner.os }}-${{ inputs.app_name }}-
+
     - name: Setup QEMU
       if: steps.check-build.outputs.BUILD != 'false'
       shell: bash
@@ -69,6 +79,8 @@ runs:
       if: steps.check-build.outputs.BUILD != 'false'
       shell: bash
       run: |
+        sudo mkdir -p /home/runner/data/cache/ccache
+        sudo chown -R root:docker /home/runner/data/cache
         if [ -f /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/scripts/prepare.sh ]; then
           bash /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/scripts/prepare.sh
         fi
@@ -88,7 +100,15 @@ runs:
         CIBW_ENVIRONMENT_LINUX: >
           APP_NAME=${{ inputs.app_name }}
           APP_VERSION=${{ inputs.app_version }}
-          PATH="$HOME/.cargo/bin:$PATH"
-          PIP_INDEX_URL="https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple"
+          PATH="/usr/lib64/ccache:$HOME/.cargo/bin:$PATH"
+          CCACHE_DIR="/host/home/runner/data/cache/ccache"
+          PIP_EXTRA_INDEX_URL="https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple"
           ${{ steps.check-env.outputs.CIBW_ENVIRONMENT_CUSTOM }}
-          
+
+    - name: Cache permissions
+      if: |
+        always() &&
+        steps.check-build.outputs.BUILD != 'false'
+      shell: bash
+      run: |
+        sudo chown -R runner:docker /home/runner/data/cache

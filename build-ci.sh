@@ -15,6 +15,10 @@ if [ -f "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/requirements/rust" ];
   curl -sSf https://sh.rustup.rs | sh -s -- -y
 fi
 
+if [ -f "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/ccache" ]; then
+  yum install -y ccache
+fi
+
 if [ -f "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/scripts/build.sh" ]; then
   bash "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/scripts/build.sh"
 fi
