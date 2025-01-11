@@ -18,29 +18,22 @@ runs:
       run: |
         mkdir -p /tmp/tools /tmp/cache
         wget -O - https://github.com/loong64/pypi/archive/refs/heads/master.tar.gz | tar xz --strip-components=1 -C /tmp/tools
-    
+
     - name: Check environment
-      id: check-env
       shell: bash
       run: |
-        CIBW_BUILD=""
         CIBW_ENVIRONMENT_CUSTOM=""
         CIBW_PROJECT_REQUIRES_PYTHON=""
-        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi" ]; then
-          CIBW_BUILD=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi")
-        fi
         if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/env" ]; then
           CIBW_ENVIRONMENT_CUSTOM=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/env")
         fi
         if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python" ]; then
           CIBW_PROJECT_REQUIRES_PYTHON=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python")
         fi
-        echo "CIBW_BUILD=${CIBW_BUILD}" >> $GITHUB_OUTPUT
-        echo "CIBW_ENVIRONMENT_CUSTOM=${CIBW_ENVIRONMENT_CUSTOM}" >> $GITHUB_OUTPUT
-        echo "CIBW_PROJECT_REQUIRES_PYTHON=${CIBW_PROJECT_REQUIRES_PYTHON}" >> $GITHUB_OUTPUT
+        echo "CIBW_ENVIRONMENT_CUSTOM=${CIBW_ENVIRONMENT_CUSTOM}" >> $GITHUB_ENV
+        echo "CIBW_PROJECT_REQUIRES_PYTHON=${CIBW_PROJECT_REQUIRES_PYTHON}" >> $GITHUB_ENV
 
-    - name: Get sdist
-      id: check-build
+    - name: Check Build
       shell: bash
       run: |
         package=${{ inputs.app_name }}
@@ -49,20 +42,37 @@ runs:
           version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
         fi
         echo "Building package: ${package} version: ${version}"
-        download_url=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-        if [ -z "$download_url" ]; then
-          echo "Error: Could not find sdist package for ${package} ${version}"
-          exit 1
-        fi
-        if curl https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package} | grep "${version}"; then
+
+        if curl -sSL "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package}" | grep -q "${version}"; then
           echo "Package ${package} ${version} already exists"
-          echo "BUILD=false" >> $GITHUB_OUTPUT
+          echo "BUILD=false" >> $GITHUB_ENV
+          exit 0
+        fi
+
+        full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+        
+        CIBW_BUILD=""
+        if echo "$full_json" | jq -r '.urls[] | .filename' | grep -q "abi3-manylinux"; then
+          CIBW_BUILD="cp39-manylinux_*"
+        fi
+        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi" ]; then
+          CIBW_BUILD=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi")
+        fi
+        echo "CIBW_BUILD=${CIBW_BUILD}" >> $GITHUB_ENV
+
+        download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+        if [ -z "$download_url" ]; then
+          if [ ! -f /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/get_source.sh ]; then
+            echo "No source found for package ${package} version ${version}"
+            exit 1
+          fi
+          download_url=$(bash /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/get_source.sh)
         fi
         wget -O - "$download_url" | tar xz --strip-components=1
 
     - name: Cache build
       uses: actions/cache@v4
-      if: steps.check-build.outputs.BUILD != 'false'
+      if: env.BUILD != 'false'
       with:
         path: |
           /home/runner/data/cache
@@ -71,12 +81,12 @@ runs:
           ${{ runner.os }}-${{ inputs.app_name }}-
 
     - name: Setup QEMU
-      if: steps.check-build.outputs.BUILD != 'false'
+      if: env.BUILD != 'false'
       shell: bash
       run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
 
     - name: Check Custom Build
-      if: steps.check-build.outputs.BUILD != 'false'
+      if: env.BUILD != 'false'
       shell: bash
       run: |
         sudo mkdir -p /home/runner/data/cache/ccache
@@ -86,15 +96,15 @@ runs:
         fi
 
     - name: Build wheels
-      if: steps.check-build.outputs.BUILD != 'false'
+      if: env.BUILD != 'false'
       uses: loong64/cibuildwheel@main
       env:
         CIBW_MANYLINUX_LOONGARCH64_IMAGE: manylinux_2_38
         CIBW_ARCHS: loongarch64
-        CIBW_BUILD: ${{ steps.check-env.outputs.CIBW_BUILD }}
+        CIBW_BUILD: ${{ env.CIBW_BUILD }}
         CIBW_SKIP: "pp* *-musllinux_*"
         CIBW_TEST_SKIP: "*"
-        CIBW_PROJECT_REQUIRES_PYTHON: ${{ steps.check-env.outputs.CIBW_PROJECT_REQUIRES_PYTHON }}
+        CIBW_PROJECT_REQUIRES_PYTHON: ${{ env.CIBW_PROJECT_REQUIRES_PYTHON }}
         CIBW_BEFORE_ALL_LINUX: >
           if [ -f /host/tmp/tools/build-ci.sh ]; then bash /host/tmp/tools/build-ci.sh; fi
         CIBW_ENVIRONMENT_LINUX: >
@@ -103,12 +113,12 @@ runs:
           PATH="/usr/lib64/ccache:$HOME/.cargo/bin:$PATH"
           CCACHE_DIR="/host/home/runner/data/cache/ccache"
           PIP_EXTRA_INDEX_URL="https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple"
-          ${{ steps.check-env.outputs.CIBW_ENVIRONMENT_CUSTOM }}
+          ${{ env.CIBW_ENVIRONMENT_CUSTOM }}
 
     - name: Cache permissions
       if: |
         always() &&
-        steps.check-build.outputs.BUILD != 'false'
+        env.BUILD != 'false'
       shell: bash
       run: |
         sudo chown -R runner:docker /home/runner/data/cache
