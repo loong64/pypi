@@ -20,11 +20,19 @@ jobs:
       - name: Get versions
         id: get-versions
         run: |
-          versions=$(curl -sSL "https://pypi.org/pypi/${{ github.event.inputs.app_name }}/json" | \
-            jq -r '.releases | keys | .[]' | \
-            grep "^${{ github.event.inputs.app_version }}" | \
-            grep -E '^[0-9]+(\.[0-9]+)*$' | \
-            jq -R -s -c 'split("\n")[:-1]')
+          package=${{ github.event.inputs.app_name }}
+          version=${{ github.event.inputs.app_version }}
+          if [ "${version}" = "latest" ]; then
+            versions=$(curl -sSL "https://pypi.org/pypi/${package}/json" | \
+              jq -r '.info.version' | \
+              jq -R -s -c 'split("\n")[:-1]')
+          else
+            versions=$(curl -sSL "https://pypi.org/pypi/${package}/json" | \
+              jq -r '.releases | keys | .[]' | \
+              grep "^${version}" | \
+              grep -E '^[0-9]+(\.[0-9]+)*$' | \
+              jq -R -s -c 'split("\n")[:-1]')
+          fi
           echo "versions=$versions" >> $GITHUB_OUTPUT
           echo "Found versions: $versions"
 
@@ -50,7 +58,7 @@ jobs:
           app_version: ${{ matrix.version }}
 
       - name: Upload wheels
-        if: env.BUILD != 'false'
+        if: always() && env.BUILD != 'false'
         run: |
           pip install twine
           twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi wheelhouse/*.whl

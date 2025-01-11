@@ -24,8 +24,14 @@ runs:
       run: |
         CIBW_ENVIRONMENT_CUSTOM=""
         CIBW_PROJECT_REQUIRES_PYTHON=""
+        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/env" ]; then
+          CIBW_ENVIRONMENT_CUSTOM=$(cat "/tmp/tools/project/${{ inputs.app_name }}/env")
+        fi
         if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/env" ]; then
           CIBW_ENVIRONMENT_CUSTOM=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/env")
+        fi
+        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/python" ]; then
+          CIBW_PROJECT_REQUIRES_PYTHON=$(cat "/tmp/tools/project/${{ inputs.app_name }}/python")
         fi
         if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python" ]; then
           CIBW_PROJECT_REQUIRES_PYTHON=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/python")
@@ -52,21 +58,21 @@ runs:
         full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
         
         CIBW_BUILD=""
-        if echo "$full_json" | jq -r '.urls[] | .filename' | grep -q "abi3-manylinux"; then
+        if echo "$full_json" | jq -r '.urls[] | .filename' | egrep -q "abi3-manylinux|py3-none-manylinux"; then
           CIBW_BUILD="cp39-manylinux_*"
         fi
-        if [ -f "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi" ]; then
-          CIBW_BUILD=$(cat "/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/abi")
+        if [ -f "/tmp/tools/project/${package}/noabi3" ] || [ -f "/tmp/tools/project/${package}/${version}/noabi3" ]; then
+          CIBW_BUILD=""
         fi
         echo "CIBW_BUILD=${CIBW_BUILD}" >> $GITHUB_ENV
 
         download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
         if [ -z "$download_url" ]; then
-          if [ ! -f /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/get_source.sh ]; then
+          if [ ! -f /tmp/tools/project/${package}/${version}/get_source.sh ]; then
             echo "No source found for package ${package} version ${version}"
             exit 1
           fi
-          download_url=$(bash /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/get_source.sh)
+          download_url=$(bash /tmp/tools/project/${package}/${version}/get_source.sh)
         fi
         wget -O - "$download_url" | tar xz --strip-components=1
 

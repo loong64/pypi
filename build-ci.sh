@@ -1,24 +1,39 @@
 #!/usr/bin/env bash
 
-set -e
+set -euo pipefail
 
-PROJECT_DIR=$(cd $(dirname $0) && pwd)
+PROJECT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+APP_NAME=${APP_NAME:?}
+APP_VERSION=${APP_VERSION:?}
 
-APP_NAME=${APP_NAME:-?}
-APP_VERSION=${APP_VERSION:-?}
+get_config_path() {
+    local file=$1
+    local version_path="${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/${file}"
+    local default_path="${PROJECT_DIR}/project/${APP_NAME}/${file}"
+    
+    if [ -f "$version_path" ]; then
+        echo "$version_path"
+    elif [ -f "$default_path" ]; then
+        echo "$default_path"
+    fi
+}
 
-if [ -f "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/requirements/rpm" ]; then
-  yum install -y $(cat ${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/requirements/rpm)
+ccache_config=$(get_config_path "ccache")
+if [ -f "$ccache_config" ]; then
+    yum install -y ccache
 fi
 
-if [ -f "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/requirements/rust" ]; then
-  curl -sSf https://sh.rustup.rs | sh -s -- -y
+rpm_file=$(get_config_path "requirements/rpm")
+if [ -f "$rpm_file" ]; then
+    yum install -y $(cat "$rpm_file")
 fi
 
-if [ -f "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/ccache" ]; then
-  yum install -y ccache
+rust_file=$(get_config_path "requirements/rust")
+if [ -f "$rust_file" ]; then
+    curl -sSf https://sh.rustup.rs | sh -s -- -y
 fi
 
-if [ -f "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/scripts/build.sh" ]; then
-  bash "${PROJECT_DIR}/project/${APP_NAME}/${APP_VERSION}/scripts/build.sh"
+build_script=$(get_config_path "scripts/build.sh")
+if [ -f "$build_script" ]; then
+    bash "$build_script"
 fi
