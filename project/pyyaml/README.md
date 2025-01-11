@@ -1,4 +1,4 @@
-grpcio
+PyYAML
 ====
 
-- https://pypi.org/project/grpcio/
+- https://pypi.org/project/PyYAML/
