@@ -58,7 +58,7 @@ jobs:
           app_version: ${{ matrix.version }}
 
       - name: Upload wheels
-        if: always() && env.BUILD != 'false'
+        if: env.BUILD != 'false'
         run: |
           pip install twine
           twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi wheelhouse/*.whl

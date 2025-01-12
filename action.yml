@@ -120,6 +120,7 @@ runs:
         CIBW_BEFORE_ALL_LINUX: >
           if [ -f /host/tmp/tools/build-ci.sh ]; then bash /host/tmp/tools/build-ci.sh; fi
         CIBW_ENVIRONMENT_LINUX: >
+          USE_CCACHE=1
           APP_NAME=${{ inputs.app_name }}
           APP_VERSION=${{ inputs.app_version }}
           PATH="/usr/lib64/ccache:$HOME/.cargo/bin:$PATH"
