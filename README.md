@@ -9,5 +9,6 @@
     # package name
     app_name: cffi
     # package version
-    app_version: latest
+    # app_version: latest
+    app_arch: loongarch64
 ```

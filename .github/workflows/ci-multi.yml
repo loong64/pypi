@@ -1,9 +1,9 @@
-name: Auto Build Packages
+name: Auto Multi-Build Packages
 
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * *'
+    - cron: '0 18 * * *'
 
 jobs:
   prepare:
@@ -16,7 +16,7 @@ jobs:
         run: |
           cd project || exit 1
           PACKAGES=$(ls -d */ | while read -r dir; do
-            if [ ! -f "${dir}/multi" ]; then
+            if [ -f "${dir}/multi" ]; then
               echo "${dir%/}"
             fi
           done | jq -R -s -c 'split("\n")[:-1]')
@@ -29,12 +29,14 @@ jobs:
       fail-fast: false
       matrix:
         package: ${{ fromJson(needs.prepare.outputs.packages) }}
+        platform: ['cp39-manylinux_*', 'cp310-manylinux_*', 'cp311-manylinux_*', 'cp312-manylinux_*', 'cp313-manylinux_*']
     steps:
       - name: Build Package
         uses: loong64/pypi@master
         with:
           app_name: ${{ matrix.package }}
           app_arch: 'loongarch64'
+          app_platform: 
 
       - name: Upload wheels
         run: |
