@@ -82,9 +82,9 @@ runs:
       with:
         path: |
           /home/runner/data/cache
-        key: ${{ runner.os }}-${{ inputs.app_name }}-${{ inputs.app_version }}
+        key: ${{ runner.os }}-${{ inputs.app_name }}
         restore-keys: |
-          ${{ runner.os }}-${{ inputs.app_name }}-
+          ${{ runner.os }}-${{ inputs.app_name }}
 
     - name: Setup QEMU
       if: env.BUILD != 'false'
