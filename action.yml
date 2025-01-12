@@ -97,8 +97,14 @@ runs:
       run: |
         sudo mkdir -p /home/runner/data/cache/ccache
         sudo chown -R root:docker /home/runner/data/cache
+        if [ -f /tmp/tools/project/${{ inputs.app_name }}/scripts/prepare.sh ]; then
+          prepare_script="/tmp/tools/project/${{ inputs.app_name }}/scripts/prepare.sh"
+        fi
         if [ -f /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/scripts/prepare.sh ]; then
-          bash /tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/scripts/prepare.sh
+          prepare_script="/tmp/tools/project/${{ inputs.app_name }}/${{ inputs.app_version }}/scripts/prepare.sh"
+        fi
+        if [ -f "$prepare_script" ]; then
+          bash "$prepare_script"
         fi
 
     - name: Build wheels
