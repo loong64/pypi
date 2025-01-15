@@ -1,0 +1,54 @@
+name: build (auditwheel)
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 'Package version'
+        required: true
+        default: 'latest'
+  schedule:
+    - cron: '0 17 * * *'
+
+jobs:
+  build:
+    name: 'Build auditwheel ${{ github.event.inputs.app_version }}'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get versions
+        run: |
+          package=auditwheel
+          version=${{ github.event.inputs.app_version }}
+          if [ "${version}" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Found version: $version"
+
+          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          if [ -z "$download_url" ]; then
+            echo "No source found for package ${package} version ${version}"
+            exit 1
+          fi
+          wget -O - "$download_url" | tar xz --strip-components=1
+          wget -O - https://github.com/loong64/auditwheel/commit/7510a5d86af8bead4941b8b7a62c10bcfc720abb.patch | patch -p1
+
+      - name: Set python
+        if: env.BUILD != 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Wheel build
+        if: env.BUILD != 'false'
+        run: |
+          pip wheel . --wheel-dir=/tmp/cibuildwheel/built_wheel --no-deps
+
+      - name: Upload wheels
+        if: env.BUILD != 'false'
+        run: |
+          pip install twine
+          twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi /tmp/cibuildwheel/built_wheel/*.whl
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
