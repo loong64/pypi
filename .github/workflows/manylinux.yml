@@ -1,0 +1,78 @@
+name: build (manylinux)
+
+on:
+  workflow_dispatch:
+    inputs:
+      latest: 
+        description: 'Build latest version'
+        type: boolean
+        required: true
+        default: false
+
+jobs:
+  build_manylinux:
+    name: ${{ matrix.policy }}_${{ matrix.platform }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        policy: ["manylinux_2_38"]
+        platform: ["loongarch64"]
+
+    env:
+      POLICY: ${{ matrix.policy }}
+      PLATFORM: ${{ matrix.platform }}
+      COMMIT_SHA: ${{ github.sha }}
+      LATEST_IMAGE: ${{ github.event.inputs.latest }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: 'loong64/manylinux'
+          ref: 'patch_loong64'
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Setup QEMU
+        run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.repository_owner }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Cache
+        uses: actions/cache@v4
+        with:
+          path: .buildx-cache-${{ matrix.policy }}_${{ matrix.platform }}/*
+          key: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}
+
+      - name: Build
+        run: ./build.sh
+
+      - name: Deploy
+        run: |
+          export TZ=UTC0
+          set -x
+          TAG="quay.io/pypa/${POLICY}_${PLATFORM}"
+          COMMIT_ABBREV_SHA=$(git show -s --format=%h "${COMMIT_SHA}")
+          COMMIT_DATE=$(git show -s --format=%cd --date=short "${COMMIT_SHA}")
+          BUILD_ID=${COMMIT_DATE}-${COMMIT_ABBREV_SHA}
+          if eval "$(git rev-parse --is-shallow-repository)"; then
+            git fetch --unshallow
+          fi
+          BUILD_NUMBER=$(git rev-list "--since=${COMMIT_DATE}T00:00:00Z" --first-parent --count "${COMMIT_SHA}")
+          BUILD_ID2=${COMMIT_DATE//-/.}-${BUILD_NUMBER}
+
+          docker tag "${TAG}:${COMMIT_SHA}" "ghcr.io/loong64/${POLICY}_${PLATFORM}:${BUILD_ID}"
+          docker tag "${TAG}:${COMMIT_SHA}" "ghcr.io/loong64/${POLICY}_${PLATFORM}:${BUILD_ID2}"
+          docker tag "${TAG}:${COMMIT_SHA}" "ghcr.io/loong64/${POLICY}_${PLATFORM}:latest"
+
+          set +x
+          docker push "ghcr.io/loong64/${POLICY}_${PLATFORM}:${BUILD_ID}"
+          docker push "ghcr.io/loong64/${POLICY}_${PLATFORM}:${BUILD_ID2}"
+          if [ "${LATEST_IMAGE}" = "true" ]; then
+            docker push "ghcr.io/loong64/${POLICY}_${PLATFORM}:latest"
+          fi
