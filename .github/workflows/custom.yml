@@ -6,6 +6,7 @@ on:
       app_name:
         description: 'Package name to build'
         required: true
+        default: ''
       app_version:
         description: 'Package version pattern'
         required: true
