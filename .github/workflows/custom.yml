@@ -49,17 +49,26 @@ jobs:
       - name: Check build
         run: |
           if curl -sSL "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${{ github.event.inputs.app_name }}" | grep "${{ github.event.inputs.app_name }}-${{ matrix.version }}" | grep -q "loongarch64"; then
-            echo "BUILD=false" >> $GITHUB_ENV
+            echo "build=false" >> $GITHUB_ENV
           fi
       - name: Build Package
-        if: env.BUILD != 'false'
+        if: env.build != 'false'
         uses: loong64/pypi@master
         with:
           app_name: ${{ github.event.inputs.app_name }}
           app_version: ${{ matrix.version }}
 
+      - name: Check wheel
+        run: |
+          if [ ! -d "wheelhouse" ]; then
+            exit 0
+          fi
+          if [ $(find wheelhouse -name "*.whl" -type f | wc -l) -gt 0 ]; then
+            echo "upload=true" >> $GITHUB_ENV
+          fi
+
       - name: Upload wheels
-        if: env.BUILD != 'false'
+        if: env.upload == 'true'
         run: |
           pip install twine
           twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi wheelhouse/*.whl

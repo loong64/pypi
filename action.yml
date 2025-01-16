@@ -97,16 +97,6 @@ runs:
         fi
         wget -O - "$download_url" | tar xz --strip-components=1
 
-    - name: Cache build
-      uses: actions/cache@v4
-      if: env.BUILD != 'false'
-      with:
-        path: |
-          /home/runner/data/cache
-        key: ${{ runner.os }}-${{ inputs.app_name }}
-        restore-keys: |
-          ${{ runner.os }}-${{ inputs.app_name }}
-
     - name: Setup QEMU
       if: env.BUILD != 'false'
       shell: bash
@@ -148,11 +138,3 @@ runs:
           CCACHE_DIR="/host/home/runner/data/cache/ccache"
           PIP_EXTRA_INDEX_URL="https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple"
           ${{ env.CIBW_ENVIRONMENT_CUSTOM }}
-
-    - name: Cache permissions
-      if: |
-        always() &&
-        env.BUILD != 'false'
-      shell: bash
-      run: |
-        sudo chown -R runner:docker /home/runner/data/cache

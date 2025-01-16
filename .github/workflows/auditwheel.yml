@@ -12,13 +12,13 @@ on:
 
 jobs:
   build:
-    name: 'Build auditwheel ${{ github.event.inputs.app_version }}'
+    name: Build auditwheel ${{ github.event.inputs.app_version || 'latest' }}
     runs-on: ubuntu-latest
     steps:
       - name: Get versions
         run: |
           package=auditwheel
-          version=${{ github.event.inputs.app_version }}
+          version=${{ github.event.inputs.app_version || 'latest' }}
           if [ "${version}" = "latest" ]; then
             version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
           fi
@@ -36,7 +36,7 @@ jobs:
             exit 1
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
-          wget -O - https://github.com/loong64/auditwheel/commit/7510a5d86af8bead4941b8b7a62c10bcfc720abb.patch | patch -p1
+          wget -O - https://github.com/loong64/auditwheel/commit/c4f57287c7e766d26931f7b65e0163a32cd686b0.patch | patch -p1
 
       - name: Set python
         if: env.BUILD != 'false'

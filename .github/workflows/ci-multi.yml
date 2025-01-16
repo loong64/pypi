@@ -36,9 +36,19 @@ jobs:
         with:
           app_name: ${{ matrix.package }}
           app_arch: 'loongarch64'
-          app_platform: 
+          app_platform: ''
+
+      - name: Check wheel
+        run: |
+          if [ ! -d "wheelhouse" ]; then
+            exit 0
+          fi
+          if [ $(find wheelhouse -name "*.whl" -type f | wc -l) -gt 0 ]; then
+            echo "upload=true" >> $GITHUB_ENV
+          fi
 
       - name: Upload wheels
+        if: env.upload == 'true'
         run: |
           pip install twine
           for file in wheelhouse/*.whl; do

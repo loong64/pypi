@@ -22,7 +22,6 @@ jobs:
     env:
       POLICY: ${{ matrix.policy }}
       PLATFORM: ${{ matrix.platform }}
-      COMMIT_SHA: ${{ github.sha }}
       LATEST_IMAGE: ${{ github.event.inputs.latest }}
 
     steps:
@@ -30,6 +29,10 @@ jobs:
         with:
           repository: 'loong64/manylinux'
           ref: 'patch_loong64'
+
+      - name: Set Environment Variables
+        run: |
+          echo "COMMIT_SHA=$(git rev-parse HEAD)" >> $GITHUB_ENV
 
       - uses: docker/setup-buildx-action@v3
 
@@ -47,7 +50,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: .buildx-cache-${{ matrix.policy }}_${{ matrix.platform }}/*
-          key: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}
+          key: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}-${{ env.COMMIT_SHA }}
+          restore-keys: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}-
 
       - name: Build
         run: ./build.sh
