@@ -6,11 +6,11 @@ on:
       app_version:
         description: 'Build version'
         required: true
-        default: 'main'
+        default: 'v0.3.29.0.0'
       openblas_version:
         description: 'OpenBLAS version'
         required: true
-        default: 'v0.3.28'
+        default: 'v0.3.29'
 
 env:
   REPO_DIR: OpenBLAS
