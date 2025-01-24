@@ -48,7 +48,7 @@ jobs:
     steps:
       - name: Check build
         run: |
-          if curl -sSL "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${{ github.event.inputs.app_name }}" | grep "${{ github.event.inputs.app_name }}-${{ matrix.version }}" | grep -q "loongarch64"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${{ github.event.inputs.app_name }}" | grep "${{ matrix.version }}" | grep -q "loongarch64"; then
             echo "build=false" >> $GITHUB_ENV
           fi
       - name: Build Package
@@ -60,12 +60,8 @@ jobs:
 
       - name: Check wheel
         run: |
-          if [ ! -d "wheelhouse" ]; then
-            exit 0
-          fi
-          if [ $(find wheelhouse -name "*.whl" -type f | wc -l) -gt 0 ]; then
-            echo "upload=true" >> $GITHUB_ENV
-          fi
+          ls -al wheelhouse/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
