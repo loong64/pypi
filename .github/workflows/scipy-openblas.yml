@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload wheels
         run: |
-          pip install twine
+          pip install twine==6.0.1
           twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi dist/*.whl
         env:
           TWINE_USERNAME: ${{ github.repository_owner }}

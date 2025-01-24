@@ -44,7 +44,7 @@ jobs:
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
-          pip install twine
+          pip install twine==6.0.1
           for file in wheelhouse/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
