@@ -2,19 +2,11 @@ name: build (scipy-openblas)
 
 on:
   workflow_dispatch:
-    inputs:
-      app_version:
-        description: 'Build version'
-        required: true
-        default: 'v0.3.29.0.0'
-      openblas_version:
-        description: 'OpenBLAS version'
-        required: true
-        default: 'v0.3.29'
+  schedule:
+    - cron: '0 10 * * *'
 
 env:
   REPO_DIR: OpenBLAS
-  OPENBLAS_COMMIT: ${{ github.event.inputs.openblas_version }}
 
 jobs:
   build:
@@ -31,7 +23,7 @@ jobs:
         MB_ML_VER: ['_2_38']
         MB_ML_LIBC: ['manylinux']
     env:
-      NIGHTLY: ${{ github.event_name == 'schedule' }}
+      NIGHTLY: false
       MB_ML_LIBC: ${{ matrix.MB_ML_LIBC }}
       MB_ML_VER: ${{ matrix.MB_ML_VER }}
       INTERFACE64: ${{ matrix.INTERFACE64 }}
@@ -39,28 +31,61 @@ jobs:
       PLAT: ${{ matrix.PLAT }}
 
     steps:
+      - name: Get Version
+        run: |
+          app_version=$(curl -s "https://api.github.com/repos/MacPython/openblas-libs/releases/latest" | jq -r ".tag_name")
+          if [ -z "${app_version}" ] || [ "${app_version}" == "null" ]; then
+            echo "Failed to get the latest version"
+            exit 1
+          fi
+
+          case ${{ matrix.INTERFACE64 }} in
+            0) pkg="scipy-openblas32" ;;
+            1) pkg="scipy-openblas64" ;;
+          esac
+
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${pkg}" | grep "${app_version/v/}" | grep -q "loongarch64"; then
+            echo "Package ${pkg} ${app_version/v/} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          openblas_version=$(echo ${app_version} | awk -F. '{print $1"."$2"."$3}')
+          echo "APP_VERSION=${app_version}" >> $GITHUB_ENV
+          echo "OPENBLAS_COMMIT=${openblas_version}" >> $GITHUB_ENV
+
+          echo ""
+          echo "========== Build Args =========="
+          echo "APP_VERSION=${app_version}"
+          echo "OPENBLAS_COMMIT=${openblas_version}"
+
       - name: Checkout Code
+        if: env.BUILD != 'false'
         uses: actions/checkout@v4
         with:
           repository: MacPython/openblas-libs
-          ref: ${{ github.event.inputs.app_version }}
+          ref: ${{ env.APP_VERSION }}
           submodules: recursive
           fetch-depth: 0
 
       - name: Setup QEMU
+        if: env.BUILD != 'false'
         run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
       
       - name: Set up Python
+        if: env.BUILD != 'false'
         uses: actions/setup-python@v5
         with:
           python-version: 3.9
 
       - name: Install VirtualEnv
+        if: env.BUILD != 'false'
         run: |
           python3 -m pip install --upgrade pip
           pip install virtualenv
 
       - name: Build OpenBLAS
+        if: env.BUILD != 'false'
         run: |
           sed -i 's@quay.io/pypa@ghcr.io/loong64@g' tools/build_steps.sh
           set -xeo pipefail
@@ -80,6 +105,7 @@ jobs:
           fi
 
       - name: Build and test wheel
+        if: env.BUILD != 'false'
         run: |
           if [[ "$NIGHTLY" = "true" ]]; then
             # Set the pyproject.toml version: convert v0.3.24-30-g138ed79f to 0.3.34.30
@@ -99,6 +125,7 @@ jobs:
           fi
 
       - name: Upload wheels
+        if: env.BUILD != 'false'
         run: |
           pip install twine==6.0.1
           twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi dist/*.whl
