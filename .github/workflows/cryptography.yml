@@ -1,4 +1,4 @@
-name: build (patchelf)
+name: build (cryptography)
 
 on:
   workflow_dispatch:
@@ -12,24 +12,23 @@ on:
     - cron: '0 17 * * *'
 
 jobs:
-  build_wheels:
-    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  manylinux:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            arch: "loongarch64"
-            build: "manylinux_"
-          - os: ubuntu-latest
-            arch: "loongarch64"
-            build: "musllinux_"
+        PYTHON:
+          - { VERSION: "cp311-cp311", ABI_VERSION: 'py37', BUILD_VERSION: 'cp39' }
+          - { VERSION: "cp311-cp311", ABI_VERSION: 'py39', BUILD_VERSION: 'cp39'  }
+        MANYLINUX:
+          - { NAME: "manylinux_", ARCH: "loongarch64" }
+          - { NAME: "musllinux_", ARCH: "loongarch64" }
+        
 
     steps:
       - name: Get Source Code
         run: |
-          package=patchelf
+          package=cryptography
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -41,7 +40,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*_loongarch64.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -63,9 +62,17 @@ jobs:
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@main
         env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "cp39-${{ matrix.build }}*"
+          CIBW_ARCHS: "${{ matrix.MANYLINUX.ARCH }}"
+          CIBW_BUILD: "${{ matrix.PYTHON.BUILD_VERSION }}-${{ matrix.MANYLINUX.NAME }}*"
+          CIBW_BUILD_FRONTEND: "build[uv]"
+          CIBW_CONFIG_SETTINGS: "build-args=--features=pyo3/abi3-${{ matrix.PYTHON.ABI_VERSION }}"
+          CIBW_ENVIRONMENT_LINUX: >
+            OPENSSL_DIR="/opt/pyca/cryptography/openssl"
+            OPENSSL_STATIC=1
+            RUSTUP_HOME="/root/.rustup"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_MANYLINUX_LOONGARCH64_IMAGE: "ghcr.io/loong64/cryptography-manylinux_2_38:loongarch64"
+          CIBW_MUSLLINUX_LOONGARCH64_IMAGE: "ghcr.io/loong64/cryptography-musllinux_1_2:loongarch64"
 
       - name: Check wheel
         run: |

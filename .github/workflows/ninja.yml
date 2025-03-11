@@ -30,7 +30,11 @@ jobs:
       - name: Get Source Code
         run: |
           package=ninja
-          version=${{ github.event.inputs.version }}
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
           if [ "$version" = "latest" ]; then
             version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
           fi
