@@ -22,6 +22,17 @@ jobs:
         INTERFACE64: ['0', '1']
         MB_ML_VER: ['_2_38']
         MB_ML_LIBC: ['manylinux']
+        include:
+          - os: ubuntu-latest
+            PLAT: loongarch64
+            INTERFACE64: '1'
+            MB_ML_LIBC: musllinux
+            MB_ML_VER: _1_2
+          - os: ubuntu-latest
+            PLAT: loongarch64
+            INTERFACE64: '0'
+            MB_ML_LIBC: musllinux
+            MB_ML_VER: _1_2
     env:
       NIGHTLY: false
       MB_ML_LIBC: ${{ matrix.MB_ML_LIBC }}
