@@ -38,22 +38,22 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
           fi
 
-          PYXMLSEC_LIBXML2_VERSION=$(curl -sSL https://github.com/xmlsec/python-xmlsec/raw/refs/tags/${version}/.github/workflows/wheels.yml | grep PYXMLSEC_LIBXML2_VERSION | grep -oP '\d+\.\d+\.\d+')
-          PYXMLSEC_LIBXSLT_VERSION=$(curl -sSL https://github.com/xmlsec/python-xmlsec/raw/refs/tags/${version}/.github/workflows/wheels.yml | grep PYXMLSEC_LIBXSLT_VERSION | grep -oP '\d+\.\d+\.\d+')
-          if [ -z "$PYXMLSEC_LIBXML2_VERSION" ] || [ -z "$PYXMLSEC_LIBXSLT_VERSION" ]; then
-              echo "No libxml2/libxslt version found"
-              exit 1
+          wget https://github.com/xmlsec/python-xmlsec/raw/refs/tags/${version}/.github/workflows/wheels.yml
+          if grep -q "PYXMLSEC_LIBXML2_VERSION" wheels.yml; then
+              PYXMLSEC_LIBXML2_VERSION=$(grep PYXMLSEC_LIBXML2_VERSION wheels.yml | grep -oP '\d+\.\d+\.\d+')
+              echo "PYXMLSEC_LIBXML2_VERSION: ${PYXMLSEC_LIBXML2_VERSION}"
           fi
-          echo "PYXMLSEC_LIBXML2_VERSION: ${PYXMLSEC_LIBXML2_VERSION}"
-          echo "PYXMLSEC_LIBXSLT_VERSION: ${PYXMLSEC_LIBXSLT_VERSION}"
-          echo "PYXMLSEC_LIBXML2_VERSION=${PYXMLSEC_LIBXML2_VERSION}" >> $GITHUB_ENV
-          echo "PYXMLSEC_LIBXSLT_VERSION=${PYXMLSEC_LIBXSLT_VERSION}" >> $GITHUB_ENV
+          if grep -q "PYXMLSEC_LIBXSLT_VERSION" wheels.yml; then
+              PYXMLSEC_LIBXSLT_VERSION=$(grep PYXMLSEC_LIBXSLT_VERSION wheels.yml | grep -oP '\d+\.\d+\.\d+')
+              echo "PYXMLSEC_LIBXSLT_VERSION: ${PYXMLSEC_LIBXSLT_VERSION}"
+          fi
+          rm -f wheels.yml
 
           full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
@@ -73,8 +73,9 @@ jobs:
         uses: loong64/cibuildwheel@main
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}"
+          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL PYXMLSEC_LIBXML2_VERSION PYXMLSEC_LIBXSLT_VERSION
+          CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
         run: |

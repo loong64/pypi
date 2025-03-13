@@ -55,7 +55,7 @@ jobs:
             1) pkg="scipy-openblas64" ;;
           esac
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${pkg}" | grep "${app_version/v/}" | grep -q "loongarch64"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${pkg}" | grep -oP '(?<=>)[^<]+\.whl' | grep "${app_version/v/}" | grep -q "loongarch64"; then
             echo "Package ${pkg} ${app_version/v/} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0

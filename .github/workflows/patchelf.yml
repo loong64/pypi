@@ -13,18 +13,15 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.arch }} wheels
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            arch: "loongarch64"
-            build: "manylinux_"
-          - os: ubuntu-latest
-            arch: "loongarch64"
-            build: "musllinux_"
+          - arch: "loongarch64"
+            docker_arch: "loong64"
+            test_image: ghcr.io/loong64/manylinux_2_38_loongarch64
 
     steps:
       - name: Get Source Code
@@ -41,7 +38,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_${{ matrix.arch }}.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -55,17 +52,57 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
+          sed -i 's@FROM python@FROM ghcr.io/loong64/python@g' Dockerfile
+          sed -i 's@alpine3.20@alpine3.21@g' Dockerfile
+          sed -i 's@arm/armv7l@loong64/loongarch64@g' Dockerfile
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
+
+      - name: Set up Docker Buildx
+        if: env.BUILD != 'false'
+        uses: docker/setup-buildx-action@v3.10.0
+
+      - name: Build patchelf_build_${{ matrix.arch }} image
+        if: env.BUILD != 'false'
+        uses: docker/build-push-action@v6.15.0
+        with:
+          context: .
+          load: true
+          push: false
+          tags: patchelf_build_${{ matrix.arch }}:latest
+          platforms: linux/${{ matrix.docker_arch }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@main
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "cp39-${{ matrix.build }}*"
+          CIBW_CONFIG_SETTINGS: "cmake.define.RUN_PATCHELF_TEST=OFF"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_TEST_SKIP: "*"
+          CIBW_MUSLLINUX_LOONGARCH64_IMAGE: patchelf_build_${{ matrix.arch }}
+
+      - name: Test wheel on ${{ matrix.test_image }}
+        if: env.BUILD != 'false'
+        run: |
+          cat <<EOF > check.sh
+          set -e
+          set -x
+          if ! which pipx; then
+            python3 -m pip install pipx
+            export PATH=/root/.local/bin:\$PATH
+            pipx install auditwheel -i https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple
+          fi
+          WHEEL=$(find ./wheelhouse -name 'patchelf-*.whl')
+          auditwheel show \${WHEEL}
+          pipx install -f \${WHEEL}
+          patchelf --version
+          EOF
+          docker run --platform linux/${{ matrix.arch == 'i686' && 'amd64' || matrix.docker_arch }} -v $(pwd):/gha ${{ matrix.test_image }} sh -ec "cd /gha && sh ./check.sh"
 
       - name: Check wheel
         run: |

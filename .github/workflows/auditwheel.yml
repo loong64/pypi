@@ -24,7 +24,7 @@ jobs:
           fi
           echo "Found version: $version"
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package}" | grep -q "auditwheel-${version}-py3-none-any.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "auditwheel-${version}-py3-none-any.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
