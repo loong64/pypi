@@ -13,14 +13,14 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.arch }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }} wheels
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            arch: "loongarch64"
+        arch: [ 'loongarch64' ]
+        build: [ 'manylinux_', 'musllinux_' ]
+        python: [ 'cp38', 'cp39', 'cp310', 'cp311', 'cp312', 'cp313' ]
 
 
     steps:
@@ -38,7 +38,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*_${{ matrix.arch }}.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -62,6 +62,8 @@ jobs:
         uses: loong64/cibuildwheel@main
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD_VERBOSITY: 1
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel

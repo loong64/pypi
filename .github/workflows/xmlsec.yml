@@ -1,4 +1,4 @@
-name: build (cffi)
+name: build (xmlsec)
 
 on:
   workflow_dispatch:
@@ -13,20 +13,20 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.arch }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+    name: Build ${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }} wheels
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-latest
-            arch: "loongarch64"
+        arch: [ 'loongarch64' ]
+        build: [ 'manylinux_', 'musllinux_' ]
+        python: [ 'cp38', 'cp39', 'cp310', 'cp311', 'cp312', 'cp313' ]
 
 
     steps:
       - name: Get Source Code
         run: |
-          package=cffi
+          package=xmlsec
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -38,11 +38,22 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*_${{ matrix.arch }}.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
           fi
+
+          PYXMLSEC_LIBXML2_VERSION=$(curl -sSL https://github.com/xmlsec/python-xmlsec/raw/refs/tags/${version}/.github/workflows/wheels.yml | grep PYXMLSEC_LIBXML2_VERSION | grep -oP '\d+\.\d+\.\d+')
+          PYXMLSEC_LIBXSLT_VERSION=$(curl -sSL https://github.com/xmlsec/python-xmlsec/raw/refs/tags/${version}/.github/workflows/wheels.yml | grep PYXMLSEC_LIBXSLT_VERSION | grep -oP '\d+\.\d+\.\d+')
+          if [ -z "$PYXMLSEC_LIBXML2_VERSION" ] || [ -z "$PYXMLSEC_LIBXSLT_VERSION" ]; then
+              echo "No libxml2/libxslt version found"
+              exit 1
+          fi
+          echo "PYXMLSEC_LIBXML2_VERSION: ${PYXMLSEC_LIBXML2_VERSION}"
+          echo "PYXMLSEC_LIBXSLT_VERSION: ${PYXMLSEC_LIBXSLT_VERSION}"
+          echo "PYXMLSEC_LIBXML2_VERSION=${PYXMLSEC_LIBXML2_VERSION}" >> $GITHUB_ENV
+          echo "PYXMLSEC_LIBXSLT_VERSION=${PYXMLSEC_LIBXSLT_VERSION}" >> $GITHUB_ENV
 
           full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
@@ -50,13 +61,6 @@ jobs:
               echo "No source found for package ${package} version ${version}"
               exit 1
           fi
-
-          libffi_version=$(https://github.com/python-cffi/cffi/blob/v${version}/.github/workflows/ci.yaml | grep github.com/libffi | grep -oP 'v\d+\.\d+\.\d+')
-          if [ -z "$libffi_version" ]; then
-              echo "No libffi version found for package ${package} version ${version}"
-              exit 1
-          fi
-          echo "libffi_version=${libffi_version/v/}" >> $GITHUB_ENV
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
@@ -69,18 +73,8 @@ jobs:
         uses: loong64/cibuildwheel@main
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BEFORE_ALL_LINUX: |
-            set -eux && \
-            cd /tmp && \
-            curl -L -O https://github.com/libffi/libffi/archive/v${{ env.libffi_version }}.tar.gz && \
-            tar zxf v${{ env.libffi_version }}.tar.gz && cd libffi-${{ env.libffi_version }} && \
-            ((command -v apk && apk add libtool) || true) && \
-            ./autogen.sh && \
-            ./configure --without-gcc-arch --disable-docs --with-pic --enable-shared=no && \
-            make install
-          CIBW_ENVIRONMENT_LINUX: >
-            CFLAGS="-Dffi_call=cffistatic_ffi_call"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}"
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL PYXMLSEC_LIBXML2_VERSION PYXMLSEC_LIBXSLT_VERSION
 
       - name: Check wheel
         run: |
