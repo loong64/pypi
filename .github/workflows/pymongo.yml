@@ -22,9 +22,6 @@ jobs:
           - os: ubuntu-latest
             arch: "loongarch64"
             build: "manylinux_"
-          - os: ubuntu-latest
-            arch: "loongarch64"
-            build: "musllinux_"
 
     steps:
       - name: Get Source Code

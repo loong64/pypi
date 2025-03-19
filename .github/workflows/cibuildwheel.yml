@@ -18,7 +18,7 @@ jobs:
       - name: Get versions
         run: |
           package=cibuildwheel
-          download_url="https://github.com/loong64/cibuildwheel/archive/refs/heads/patch_loong64.tar.gz"
+          download_url="https://github.com/loong64/cibuildwheel/archive/refs/heads/main.tar.gz"
           if [ -z "$download_url" ]; then
             echo "No source found for package ${package} version ${version}"
             exit 1
