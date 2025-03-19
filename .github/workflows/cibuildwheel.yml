@@ -1,0 +1,43 @@
+name: build (cibuildwheel)
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_version:
+        description: 'Package version'
+        required: true
+        default: 'latest'
+  # schedule:
+    # - cron: '0 17 * * *'
+
+jobs:
+  build:
+    name: Build cibuildwheel ${{ github.event.inputs.app_version || 'latest' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Get versions
+        run: |
+          package=cibuildwheel
+          download_url="https://github.com/loong64/cibuildwheel/archive/refs/heads/patch_loong64.tar.gz"
+          if [ -z "$download_url" ]; then
+            echo "No source found for package ${package} version ${version}"
+            exit 1
+          fi
+          wget -O - "$download_url" | tar xz --strip-components=1
+
+      - name: Set python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.12
+
+      - name: Wheel build
+        run: |
+          pip wheel . --wheel-dir=/tmp/cibuildwheel/built_wheel --no-deps
+
+      - name: Upload wheels
+        run: |
+          pip install twine==6.0.1
+          twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi /tmp/cibuildwheel/built_wheel/*.whl
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
