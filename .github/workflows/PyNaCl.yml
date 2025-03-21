@@ -1,4 +1,4 @@
-name: build (cryptography)
+name: build (PyNaCl)
 
 on:
   workflow_dispatch:
@@ -18,14 +18,13 @@ jobs:
       fail-fast: false
       matrix:
         PYTHON:
-          - { VERSION: "cp311", ABI_VERSION: 'py37'}
-          - { VERSION: "cp311", ABI_VERSION: 'py39'}
+          - { VERSION: "cp311", ABI_VERSION: 'cp37'}
         
 
     steps:
       - name: Get Source Code
         run: |
-          package=cryptography
+          package=PyNaCl
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -61,12 +60,9 @@ jobs:
         env:
           CIBW_ARCHS: loongarch64
           CIBW_BUILD: "${{ matrix.PYTHON.VERSION }}-*"
-          CIBW_BUILD_FRONTEND: "build[uv]"
-          CIBW_CONFIG_SETTINGS: "build-args=--features=pyo3/abi3-${{ matrix.PYTHON.ABI_VERSION }}"
+          CIBW_BUILD_FRONTEND: "build; args: --config-setting=--build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }}"
           CIBW_ENVIRONMENT_LINUX: >
-            OPENSSL_DIR="/opt/pyca/cryptography/openssl"
-            OPENSSL_STATIC=1
-            RUSTUP_HOME="/root/.rustup"
+            LIBSODIUM_MAKE_ARGS="-j4"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           CIBW_MANYLINUX_LOONGARCH64_IMAGE: "ghcr.io/loong64/cryptography-manylinux_2_38:loongarch64"
           CIBW_MUSLLINUX_LOONGARCH64_IMAGE: "ghcr.io/loong64/cryptography-musllinux_1_2:loongarch64"

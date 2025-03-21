@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         PYTHON:
-          - { VERSION: "cp38-cp38", ABI_VERSION: 'cp38', BUILD_VERSION: 'cp38' }
-          - { VERSION: "cp39-cp39", ABI_VERSION: 'cp39', BUILD_VERSION: 'cp39' }
+          - { VERSION: "cp38", ABI_VERSION: 'cp38' }
+          - { VERSION: "cp39", ABI_VERSION: 'cp39' }
         
 
     steps:
@@ -59,8 +59,8 @@ jobs:
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@main
         env:
-          CIBW_ARCHS: "loongarch64"
-          CIBW_BUILD: "${{ matrix.PYTHON.BUILD_VERSION }}-*"
+          CIBW_ARCHS: loongarch64
+          CIBW_BUILD: "${{ matrix.PYTHON.VERSION }}-*"
           CIBW_BUILD_FRONTEND: "pip; args: --config-settings=--build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }}"
           CIBW_ENVIRONMENT_LINUX: >
             RUSTUP_HOME="/root/.rustup"
