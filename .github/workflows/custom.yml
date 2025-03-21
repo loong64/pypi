@@ -10,53 +10,47 @@ on:
       app_version:
         description: 'Package version pattern'
         required: true
-        default: ''
+        default: 'latest'
 
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    outputs:
-      versions: ${{ steps.get-versions.outputs.versions }}
     steps:
       - name: Get versions
         id: get-versions
         run: |
           package=${{ github.event.inputs.app_name }}
           version=${{ github.event.inputs.app_version }}
-          if [ "${version}" = "latest" ]; then
-            versions=$(curl -sSL "https://pypi.org/pypi/${package}/json" | \
-              jq -r '.info.version' | \
-              jq -R -s -c 'split("\n")[:-1]')
-          else
-            versions=$(curl -sSL "https://pypi.org/pypi/${package}/json" | \
-              jq -r '.releases | keys | .[]' | \
-              grep "^${version}" | \
-              grep -E '^[0-9]+(\.[0-9]+)*$' | \
-              jq -R -s -c 'split("\n")[:-1]')
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
           fi
-          echo "versions=$versions" >> $GITHUB_OUTPUT
-          echo "Found versions: $versions"
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-  build:
-    needs: prepare
-    strategy:
-      fail-fast: false
-      matrix:
-        version: ${{ fromJson(needs.prepare.outputs.versions) }}
-    name: 'Build ${{ github.event.inputs.app_name }} ${{ matrix.version }}'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check build
-        run: |
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${{ github.event.inputs.app_name }}" | grep "${{ matrix.version }}" | grep -q "loongarch64"; then
-            echo "build=false" >> $GITHUB_ENV
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_loongarch64.whl"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
           fi
-      - name: Build Package
-        if: env.build != 'false'
-        uses: loong64/pypi@master
-        with:
-          app_name: ${{ github.event.inputs.app_name }}
-          app_version: ${{ matrix.version }}
+
+          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          if [ -z "$download_url" ]; then
+              echo "No source found for package ${package} version ${version}"
+              exit 1
+          fi
+          wget -O - "$download_url" | tar xz --strip-components=1
+
+      - name: Setup QEMU
+        if: env.BUILD != 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        uses: loong64/cibuildwheel@main
+        env:
+          CIBW_ARCHS: loongarch64
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel
         run: |
@@ -67,7 +61,9 @@ jobs:
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi wheelhouse/*.whl
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
         env:
           TWINE_USERNAME: ${{ github.repository_owner }}
           TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
