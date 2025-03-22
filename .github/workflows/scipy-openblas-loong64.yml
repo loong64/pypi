@@ -1,9 +1,13 @@
-name: build (scipy-openblas)
+name: build (scipy-openblas-custom)
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '0 10 * * *'
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
 
 env:
   REPO_DIR: OpenBLAS
@@ -44,18 +48,21 @@ jobs:
     steps:
       - name: Get Version
         run: |
-          app_version=$(curl -s "https://api.github.com/repos/MacPython/openblas-libs/releases/latest" | jq -r ".tag_name")
-          if [ -z "${app_version}" ] || [ "${app_version}" == "null" ]; then
-            echo "Failed to get the latest version"
-            exit 1
-          fi
-
           case ${{ matrix.INTERFACE64 }} in
             0) pkg="scipy-openblas32" ;;
             1) pkg="scipy-openblas64" ;;
           esac
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${pkg}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${app_version/v/}-.*-${{ matrix.MB_ML_LIBC }}_.*_${{ matrix.PLAT }}.whl"; then
+          app_version=${{ github.event.inputs.version }}
+          if [ "$app_version" = "latest" ]; then
+            app_version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          if [ -z "${app_version}" ] || [ "${app_version}" == "null" ]; then
+            echo "Failed to get the latest version"
+            exit 1
+          fi
+
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${pkg}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q ""${app_version/v/}-.*-${{ matrix.MB_ML_LIBC }}_.*_${{ matrix.PLAT }}.whl""; then
             echo "Package ${pkg} ${app_version/v/} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -74,7 +81,7 @@ jobs:
         if: env.BUILD != 'false'
         uses: actions/checkout@v4
         with:
-          repository: MacPython/openblas-libs
+          repository: loong64/openblas-libs
           ref: ${{ env.APP_VERSION }}
           submodules: recursive
           fetch-depth: 0
