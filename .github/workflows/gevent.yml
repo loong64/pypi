@@ -38,7 +38,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_${{ matrix.arch }}.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_loongarch64.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -47,6 +47,7 @@ jobs:
           echo "VERSION=${version}" >> $GITHUB_ENV
 
       - name: checkout
+        if: env.BUILD != 'false'
         uses: actions/checkout@v4
         with:
           repository: gevent/gevent
@@ -70,6 +71,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build and test gevent
+        if: env.BUILD != 'false'
         env:
           DOCKER_IMAGE: ghcr.io/loong64/${{ matrix.image }}
           GEVENT_MANYLINUX_NAME: ${{ matrix.image }}

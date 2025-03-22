@@ -1,4 +1,4 @@
-name: build (argon2-cffi-bindings)
+name: build (pillow)
 
 on:
   workflow_dispatch:
@@ -21,12 +21,16 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: "loongarch64"
+            build: "manylinux_"
+          - os: ubuntu-latest
+            arch: "loongarch64"
+            build: "musllinux_"
 
 
     steps:
       - name: Get Source Code
         run: |
-          package=argon2-cffi-bindings
+          package=pillow
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -38,10 +42,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          # argon2_cffi_bindings-21.2.0-cp39-abi3-manylinux_2_36_loongarch64.manylinux_2_38_loongarch64.whl
-          # argon2_cffi_bindings-21.2.0-cp39-abi3-musllinux_1_2_loongarch64.whl 
-          check_file="argon2_cffi_bindings-${version}-.*_${{ matrix.arch }}.whl"
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -53,7 +54,6 @@ jobs:
               echo "No source found for package ${package} version ${version}"
               exit 1
           fi
-
           wget -O - "$download_url" | tar xz --strip-components=1
 
       - name: Setup QEMU
@@ -65,9 +65,12 @@ jobs:
         uses: loong64/cibuildwheel@main
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "cp39-*"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            set -eux && \
+            ((command -v apk && apk add tiff-dev jpeg-dev openjpeg-dev zlib-dev freetype-dev lcms2-dev libwebp-dev tcl-dev tk-dev harfbuzz-dev fribidi-dev libimagequant-dev libxcb-dev libpng-dev) || true) && \
+            ((command -v dnf && dnf install -y libtiff-devel libjpeg-devel openjpeg2-devel zlib-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel harfbuzz-devel fribidi-devel libraqm-devel libimagequant-devel libxcb-devel) || true)
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
-          CIBW_TEST_COMMAND: python -Ic "from _argon2_cffi_bindings import ffi, lib; print(lib.ARGON2_VERSION_NUMBER)"
 
       - name: Check wheel
         run: |

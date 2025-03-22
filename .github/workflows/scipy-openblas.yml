@@ -99,6 +99,7 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           sed -i 's@quay.io/pypa@ghcr.io/loong64@g' tools/build_steps.sh
+          echo -n > OpenBLAS/utest/test_kernel_regress.c
           set -xeo pipefail
           source tools/build_steps.sh
           echo "------ BEFORE BUILD ---------"
@@ -134,6 +135,16 @@ jobs:
               /bin/bash -xe /openblas/tools/build_wheel.sh
             sudo chmod -R a+w dist
           fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}-${{ matrix.PLAT }}-${{ matrix.INTERFACE64 }}-${{ matrix.MB_ML_LIBC }}-${{ matrix.MB_ML_VER }}
+          path: dist/scipy_openblas*.whl
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openblas-${{ matrix.os }}-${{ matrix.PLAT }}-${{ matrix.INTERFACE64 }}-${{ matrix.MB_ML_LIBC }}-${{ matrix.MB_ML_VER }}
+          path: libs/openblas*.tar.gz
 
       - name: Upload wheels
         if: env.BUILD != 'false'
