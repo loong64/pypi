@@ -1,4 +1,4 @@
-name: build (contourpy)
+name: build (matplotlib)
 
 on:
   workflow_dispatch:
@@ -13,10 +13,9 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.arch }} wheels on ${{ matrix.os }}
+    name: Build wheels on ${{ matrix.os }} for ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
-      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -26,7 +25,7 @@ jobs:
     steps:
       - name: Get Source Code
         run: |
-          package=contourpy
+          package=matplotlib
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -53,8 +52,6 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
-
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
@@ -63,8 +60,12 @@ jobs:
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@main
         env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_ARCHS: ${{ matrix.arch }}
+          CIBW_BEFORE_BUILD: >-
+            rm -rf {package}/build
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_TEST_COMMAND: >-
+            python {package}/ci/check_version_number.py
 
       - name: Check wheel
         run: |
