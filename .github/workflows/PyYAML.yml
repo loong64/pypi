@@ -75,12 +75,20 @@ jobs:
           sed -i 's@make test-all@# make test-all@' packaging/build/libyaml.sh
           sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyyaml/pyproject.toml
 
+      - name: Check cached libyaml state
+        if: env.BUILD != 'false'
+        id: cached_libyaml
+        uses: actions/cache@v4
+        with:
+          path: libyaml
+          key: libyaml_${{ matrix.platform }}_${{ matrix.arch }}_${{ env.LIBYAML_REF }}
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
 
       - name: Build libyaml
-        if: env.BUILD != 'false'
+        if: env.BUILD != 'false' && steps.cached_libyaml.outputs.cache-hit != 'true'
         run: |
           if [ "${{ matrix.build }}" = "manylinux_" ]; then
             DOCKER_IMAGE="ghcr.io/loong64/${{ matrix.platform }}_${{ matrix.arch }}"
@@ -100,7 +108,7 @@ jobs:
             sh -c "$DOCKER_CMD"
 
       - name: ensure output is world readable (or cache fill fails with Permission Denied)
-        if: env.BUILD != 'false'
+        if: env.BUILD != 'false' && steps.cached_libyaml.outputs.cache-hit != 'true'
         run: >
           sudo chmod -R a+r ./libyaml/
 
