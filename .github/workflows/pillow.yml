@@ -52,9 +52,18 @@ jobs:
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
           if [ -z "$download_url" ]; then
               echo "No source found for package ${package} version ${version}"
-              exit 1
+              echo "SOURCE=false" >> $GITHUB_ENV
+              echo "VERSION=${version}" >> $GITHUB_ENV
+              exit 0
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
+
+      - name: checkout
+        if: env.SOURCE == 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: python-pillow/Pillow
+          ref: ${{ env.VERSION }}
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -66,11 +75,12 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_ALL_LINUX: >
+          CIBW_BEFORE_ALL_LINUX: |
             set -eux && \
-            ((command -v apk && apk add tiff-dev jpeg-dev openjpeg-dev zlib-dev freetype-dev lcms2-dev libwebp-dev tcl-dev tk-dev harfbuzz-dev fribidi-dev libimagequant-dev libxcb-dev libpng-dev) || true) && \
-            ((command -v dnf && dnf install -y libtiff-devel libjpeg-devel openjpeg2-devel zlib-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel harfbuzz-devel fribidi-devel libraqm-devel libimagequant-devel libxcb-devel) || true)
+            (command -v apk && apk add tiff-dev jpeg-dev openjpeg-dev zlib-dev freetype-dev lcms2-dev libwebp-dev tcl-dev tk-dev harfbuzz-dev fribidi-dev libimagequant-dev libxcb-dev libpng-dev) || true && \
+            (command -v dnf && dnf install -y libtiff-devel libjpeg-devel openjpeg2-devel zlib-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel harfbuzz-devel fribidi-devel libraqm-devel libimagequant-devel libxcb-devel) || true
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
         run: |

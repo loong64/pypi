@@ -74,7 +74,7 @@ jobs:
             cd /tmp && \
             curl -L -O https://github.com/libffi/libffi/archive/v${{ env.libffi_version }}.tar.gz && \
             tar zxf v${{ env.libffi_version }}.tar.gz && cd libffi-${{ env.libffi_version }} && \
-            ((command -v apk && apk add libtool) || true) && \
+            (command -v apk && apk add libtool) || true && \
             ./autogen.sh && \
             ./configure --without-gcc-arch --disable-docs --with-pic --enable-shared=no && \
             make install
