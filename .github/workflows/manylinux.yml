@@ -3,7 +3,12 @@ name: build (manylinux)
 on:
   workflow_dispatch:
     inputs:
-      latest: 
+      branch:
+        description: 'Branch to build'
+        type: string
+        required: true
+        default: 'patch_loong64'
+      latest:
         description: 'Build latest version'
         type: boolean
         required: true
@@ -48,7 +53,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'loong64/manylinux'
-          ref: 'patch_loong64'
+          ref: '${{ github.event.inputs.branch }}'
 
       - name: Set Environment Variables
         run: |
