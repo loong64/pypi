@@ -65,10 +65,10 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
           if [ -f "scripts/build/wheel_linux_before_all.sh" ]; then
-            sed -i 's@centos@anolis@g' scripts/build/wheel_linux_before_all.sh
+            sed -i 's@centos@opencloudos@g' scripts/build/wheel_linux_before_all.sh
           fi
           if [ -f "scripts/build/build_libpq.sh" ]; then
-            sed -i 's@centos)@anolis)@g' scripts/build/build_libpq.sh scripts/build/print_so_versions.sh
+            sed -i 's@centos)@opencloudos)@g' scripts/build/build_libpq.sh scripts/build/print_so_versions.sh
             sed -i 's@linux-pam-dev@linux-pam-dev perl-utils@g' scripts/build/build_libpq.sh
             sed -i 's@pam-devel@pam-devel perl-lib perl-FindBin openldap-devel openssl-devel @g' scripts/build/build_libpq.sh
           fi
