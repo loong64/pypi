@@ -18,11 +18,6 @@ get_config_path() {
     fi
 }
 
-ccache_config=$(get_config_path "ccache")
-if [ -f "$ccache_config" ]; then
-    yum install -y ccache
-fi
-
 rpm_file=$(get_config_path "requirements/rpm")
 if [ -f "$rpm_file" ]; then
     yum install -y $(cat "$rpm_file")

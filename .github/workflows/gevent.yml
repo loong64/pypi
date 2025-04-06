@@ -59,13 +59,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Cache ~/.ccache
-        if: env.BUILD != 'false'
-        uses: actions/cache@v4
-        with:
-          path: ~/.ccache/**
-          key: ${{ runner.os }}-ccache-gevent-
-
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
