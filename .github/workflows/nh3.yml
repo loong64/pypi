@@ -14,9 +14,6 @@ on:
 jobs:
   linux-cross:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        target: ['loongarch64']
     steps:
       - name: Get Source Code
         run: |
@@ -56,18 +53,18 @@ jobs:
         uses: pyo3/maturin-action@v1
         with:
           rust-toolchain: stable
-          target: ${{ matrix.target }}
-          manylinux: auto
+          target: 'loongarch64-unknown-linux-gnu'
+          manylinux: 'manylinux_2_36'
           args: --release --out dist
           sccache: true
 
       - name: Build free-threaded wheels
         if: env.BUILD != 'false'
-        uses: pyo3/maturin-action@main
+        uses: pyo3/maturin-action@v1
         with:
           rust-toolchain: stable
-          target: ${{ matrix.target }}
-          manylinux: auto
+          target: 'loongarch64-unknown-linux-gnu'
+          manylinux: 'manylinux_2_36'
           args: --release --out dist -i python3.13
           sccache: true
       
