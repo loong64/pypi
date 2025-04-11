@@ -12,6 +12,87 @@ on:
     - cron: '0 17 * * *'
 
 jobs:
+  linux-cross:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - target: loongarch64-unknown-linux-gnu
+            arch: loongarch64
+            manylinux: 'manylinux_2_36'
+          # - target: loongarch64-unknown-linux-musl
+          #   arch: loongarch64
+          #   manylinux: "musllinux_1_2"
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=pydantic-core
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+
+          check_file="pydantic_core-${version}-.*-${{ matrix.platform.manylinux }}_${{ matrix.platform.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          echo "VERSION=v${version}" >> $GITHUB_ENV
+      
+      - uses: actions/checkout@v3
+        if: env.BUILD != 'false'
+        with:
+          repository: pydantic/pydantic-core
+          ref: ${{ env.VERSION }}
+
+      - uses: actions/setup-python@v4
+        if: env.BUILD != 'false'
+        with:
+          python-version: 3.13
+
+      - run: pip install -U twine 'ruff==0.5.0' typing_extensions
+        if: env.BUILD != 'false'
+
+      # generate self-schema now, so we don't have to do so inside docker in maturin build
+      - run: python generate_self_schema.py
+        if: env.BUILD != 'false'
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        uses: loong64/maturin-action@main
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13
+          rust-toolchain: stable
+          docker-options: -e CI
+      
+      - name: Check wheel
+        run: |
+          ls -al dist/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in dist/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
+
   build_wheels:
     name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
@@ -19,9 +100,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            arch: "loongarch64"
-            build: "manylinux_"
+          # - os: ubuntu-latest
+          #   arch: "loongarch64"
+          #   build: "manylinux_"
           - os: ubuntu-latest
             arch: "loongarch64"
             build: "musllinux_"
