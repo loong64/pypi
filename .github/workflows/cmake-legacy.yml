@@ -1,4 +1,4 @@
-name: build (cmake)
+name: build (cmake-legacy)
 
 on:
   workflow_dispatch:
@@ -8,8 +8,6 @@ on:
         description: 'Package version'
         type: string
         required: true
-  schedule:
-    - cron: '0 17 * * *'
 
 jobs:
   build_wheels:
@@ -26,25 +24,24 @@ jobs:
             arch: "loongarch64"
             build: "musllinux_"
 
+
     steps:
       - name: Get Source Code
         run: |
           package=cmake
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            version="latest"
-          else
-            version=${{ github.event.inputs.version }}
-          fi
+          version=${{ github.event.inputs.version }}
+
           if [ "$version" = "latest" ]; then
             version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
           fi
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
-            echo "Package ${package} ${version} already exists"
-            echo "BUILD=false" >> $GITHUB_ENV
-            exit 0
+          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          if [ -z "$download_url" ]; then
+              echo "No source found for package ${package} version ${version}"
+              exit 1
           fi
 
           case "${{ matrix.build }}" in
@@ -56,31 +53,41 @@ jobs:
               ;;
           esac
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's/musllinux_1_1/musllinux_1_2/g' pyproject.toml
-          sed -i 's/"\*linux_s390x"/"\*linux_s390x", "\*linux_loongarch64"/g' pyproject.toml
           sed -i 's/"\*-manylinux_s390x"/"\*-manylinux_s390x", "\*-manylinux_loongarch64"/g' pyproject.toml
           sed -i 's/"\*-musllinux_s390x"/"\*-musllinux_s390x", "\*-musllinux_loongarch64"/g' pyproject.toml
-          sed -i 's/"cmake.define.RUN_CMAKE_TEST" = "ON"/"cmake.define.RUN_CMAKE_TEST" = "OFF"/g' pyproject.toml
+
+          mkdir -p scripts
+          wget -O scripts/repair_wheel.py https://github.com/scikit-build/cmake-python-distributions/raw/refs/tags/${version}/scripts/repair_wheel.py
+          if [ ! -f "requirements-repair.txt" ]; then
+            wget https://github.com/scikit-build/cmake-python-distributions/raw/refs/tags/${version}/requirements-repair.txt
+          fi
+          if [ ! -f "scripts/utils.sh" ]; then
+            wget -O scripts/utils.sh https://github.com/scikit-build/cmake-python-distributions/raw/refs/tags/${version}/scripts/utils.sh
+          fi
+          if [ ! -f "scripts/manylinux-build-and-install-openssl.sh" ]; then
+            wget -O scripts/manylinux-build-and-install-openssl.sh https://github.com/scikit-build/cmake-python-distributions/raw/refs/tags/${version}/scripts/manylinux-build-and-install-openssl.sh
+          fi
+          sudo chmod +x scripts/utils.sh scripts/manylinux-build-and-install-openssl.sh
 
       - name: Setup QEMU
-        if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
 
       - name: Build wheels
-        if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@main
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          # CIBW_BUILD: "cp39-${{ matrix.build }}*"
+          CIBW_BEFORE_ALL_LINUX: >
+            pipx uninstall cmake &&
+            (command -v apk && apk add perl-utils cmake) || true &&
+            (command -v yum && yum -y install perl perl-IPC-Cmd cmake) || true &&
+            ./scripts/manylinux-build-and-install-openssl.sh
+          CIBW_BEFORE_BUILD_LINUX: >
+            pip install -U pip scikit-build ninja &&
+            pip install -r requirements-repair.txt
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
         run: |
