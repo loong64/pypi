@@ -51,7 +51,7 @@ jobs:
               exit 1
           fi
 
-          libffi_version=$(https://github.com/python-cffi/cffi/blob/v${version}/.github/workflows/ci.yaml | grep github.com/libffi | grep -oP 'v\d+\.\d+\.\d+')
+          libffi_version=$(curl -sSL https://github.com/python-cffi/cffi/raw/refs/heads/main/.github/workflows/ci.yaml | grep github.com/libffi | grep -oP 'v\d+\.\d+\.\d+')
           if [ -z "$libffi_version" ]; then
               echo "No libffi version found for package ${package} version ${version}"
               exit 1
