@@ -57,6 +57,7 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
+          sed -i 's@build = @# build = @g' pyproject.toml
           sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
 
       - name: Setup QEMU
