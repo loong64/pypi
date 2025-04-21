@@ -55,6 +55,8 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
+          sed -i 's@manylinux2010@manylinux_2_28@g' pyproject.toml
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
