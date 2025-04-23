@@ -18,7 +18,11 @@ jobs:
       - name: Get versions
         run: |
           package=cibuildwheel
-          download_url="https://github.com/loong64/cibuildwheel/archive/refs/heads/main.tar.gz"
+          if [ "${{ github.event_name }}" = "schedule" ] || [ "${{ github.event.inputs.app_version }}" = "latest" ]; then
+            download_url="https://github.com/loong64/cibuildwheel/archive/refs/heads/main.tar.gz"
+          else
+            download_url="https://github.com/loong64/cibuildwheel/archive/${{ github.event.inputs.app_version }}.tar.gz"
+          fi
           if [ -z "$download_url" ]; then
             echo "No source found for package ${package} version ${version}"
             exit 1
