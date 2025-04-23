@@ -57,7 +57,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@main
+        uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: loongarch64
           CIBW_BUILD: "${{ matrix.PYTHON.VERSION }}-*"
