@@ -66,7 +66,7 @@ jobs:
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "cp39-${{ matrix.build }}*"
+          CIBW_BUILD: "cp39-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel

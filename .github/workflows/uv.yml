@@ -64,7 +64,7 @@ jobs:
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "cp39-${{ matrix.build }}*"
+          CIBW_BUILD: "cp39-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
             curl -sSf https://sh.rustup.rs | sh -s -- -y
           CIBW_ENVIRONMENT_LINUX: >
