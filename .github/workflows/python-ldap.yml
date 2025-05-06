@@ -25,7 +25,12 @@ jobs:
           - os: ubuntu-latest
             arch: "loongarch64"
             build: "musllinux_"
-
+          - os: ubuntu-latest
+            arch: "s390x"
+            build: "manylinux_"
+          - os: ubuntu-latest
+            arch: "s390x"
+            build: "musllinux_"
     steps:
       - name: Get Source Code
         run: |
