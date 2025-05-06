@@ -20,7 +20,16 @@ jobs:
         PYTHON:
           - { VERSION: "cp38", ABI_VERSION: 'cp38' }
           - { VERSION: "cp39", ABI_VERSION: 'cp39' }
-        
+        MANYLINUX:
+          - { NAME: "manylinux2014_ppc64le", CONTAINER: "cryptography-manylinux2014:ppc64le", RUNNER: "ubuntu-latest" }
+          - { NAME: "manylinux_2_28_ppc64le", CONTAINER: "cryptography-manylinux_2_28:ppc64le", RUNNER: "ubuntu-latest"}
+          - { NAME: "musllinux_1_2_ppc64le", CONTAINER: "cryptography-musllinux_1_2:ppc64le", RUNNER: "ubuntu-latest" }
+
+          - { NAME: "manylinux2014_s390x", CONTAINER: "cryptography-manylinux2014:s390x", RUNNER: "ubuntu-latest" }
+          - { NAME: "manylinux_2_28_s390x", CONTAINER: "cryptography-manylinux_2_28:s390x", RUNNER: "ubuntu-latest" }
+
+          - { NAME: "manylinux_2_38_loongarch64", CONTAINER: "cryptography-manylinux_2_38:loongarch64", RUNNER: "ubuntu-latest" }
+          - { NAME: "musllinux_1_2_loongarch64", CONTAINER: "cryptography-musllinux_1_2:loongarch64", RUNNER: "ubuntu-latest" }
 
     steps:
       - name: Get Source Code
@@ -37,7 +46,56 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_loongarch64.whl"; then
+          case "${{ matrix.MANYLINUX.NAME }}" in
+            manylinux2014_ppc64le)
+              check_file="${package}-${version}-.*manylinux2014_ppc64le.whl"
+              echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
+              echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_ppc64le" >> $GITHUB_ENV
+              echo "CIBW_MANYLINUX_PPC64LE_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              ;;
+            manylinux_2_28_ppc64le)
+              check_file="${package}-${version}-.*manylinux_2_28_ppc64le.whl"
+              echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
+              echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_ppc64le" >> $GITHUB_ENV
+              echo "CIBW_MANYLINUX_PPC64LE_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              ;;
+            musllinux_1_2_ppc64le)
+              check_file="${package}-${version}-.*musllinux_1_2_ppc64le.whl"
+              echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
+              echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-musllinux_ppc64le" >> $GITHUB_ENV
+              echo "CIBW_MUSLLINUX_PPC64LE_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              ;;
+            manylinux2014_s390x)
+              check_file="${package}-${version}-.*manylinux2014_s390x.whl"
+              echo "CIBW_ARCHS=s390x" >> $GITHUB_ENV
+              echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_s390x" >> $GITHUB_ENV
+              echo "CIBW_MANYLINUX_S390X_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              ;;
+            manylinux_2_28_s390x)
+              check_file="${package}-${version}-.*manylinux_2_28_s390x.whl"
+              echo "CIBW_ARCHS=s390x" >> $GITHUB_ENV
+              echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_s390x" >> $GITHUB_ENV
+              echo "CIBW_MANYLINUX_S390X_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              ;;
+            manylinux_2_38_loongarch64)
+              check_file="${package}-${version}-.*manylinux_2_38_loongarch64.whl"
+              echo "CIBW_ARCHS=loongarch64" >> $GITHUB_ENV
+              echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_loongarch64" >> $GITHUB_ENV
+              echo "CIBW_MANYLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              ;;
+            # musllinux_1_2_loongarch64)
+            #   check_file="${package}-${version}-.*musllinux_1_2_loongarch64.whl"
+            #   echo "CIBW_ARCHS=loongarch64" >> $GITHUB_ENV
+            #   echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-musllinux_loongarch64" >> $GITHUB_ENV
+            #   echo "CIBW_MUSLLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+            #   ;;
+            *)
+              echo "BUILD=false" >> $GITHUB_ENV
+              exit 0
+              ;;
+          esac
+
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -59,15 +117,10 @@ jobs:
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v2.23.2
         env:
-          CIBW_ARCHS: loongarch64
-          CIBW_BUILD: "${{ matrix.PYTHON.VERSION }}-*"
           CIBW_BUILD_FRONTEND: "pip; args: --config-settings=--build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }}"
           CIBW_ENVIRONMENT_LINUX: >
             RUSTUP_HOME="/root/.rustup"
-            PY_LIMITED_API="--config-settings=--build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }} --no-build-isolation"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
-          CIBW_MANYLINUX_LOONGARCH64_IMAGE: "ghcr.io/loong64/cryptography-manylinux_2_38:loongarch64"
-          CIBW_MUSLLINUX_LOONGARCH64_IMAGE: "ghcr.io/loong64/cryptography-musllinux_1_2:loongarch64"
 
       - name: Check wheel
         run: |
