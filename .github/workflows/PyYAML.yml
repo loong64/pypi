@@ -23,11 +23,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: "loongarch64"
             build: "manylinux_"
             platform: "manylinux_2_38"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: "loongarch64"
             build: "musllinux_"
             platform: "musllinux_1_2"

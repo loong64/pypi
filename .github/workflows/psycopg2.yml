@@ -18,8 +18,8 @@ env:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.arch }} wheels on ubuntu-latest
-    runs-on: ubuntu-latest
+    name: Build ${{ matrix.arch }} wheels on ubuntu-24.04
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:

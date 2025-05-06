@@ -19,17 +19,35 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04-arm
+            arch: "aarch64"
+            build: "manylinux_"
+          - os: ubuntu-24.04-arm
+            arch: "aarch64"
+            build: "musllinux_"
+          - os: ubuntu-24.04
             arch: "loongarch64"
             build: "manylinux_"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: "loongarch64"
             build: "musllinux_"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
+            arch: "ppc64le"
+            build: "manylinux_"
+          - os: ubuntu-24.04
+            arch: "ppc64le"
+            build: "musllinux_"
+          - os: ubuntu-24.04
             arch: "s390x"
             build: "manylinux_"
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: "s390x"
+            build: "musllinux_"
+          - os: ubuntu-24.04
+            arch: "x86_64"
+            build: "manylinux_"
+          - os: ubuntu-24.04
+            arch: "x86_64"
             build: "musllinux_"
     steps:
       - name: Get Source Code

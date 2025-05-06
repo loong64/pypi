@@ -20,7 +20,7 @@ jobs:
       matrix:
         package: [ 'pycryptodome', 'pycryptodomex' ]
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             arch: "loongarch64"
 
 

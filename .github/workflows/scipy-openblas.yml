@@ -17,18 +17,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
         PLAT: [loongarch64]
         INTERFACE64: ['0', '1']
         MB_ML_VER: ['_2_38']
         MB_ML_LIBC: ['manylinux']
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             PLAT: loongarch64
             INTERFACE64: '1'
             MB_ML_LIBC: musllinux
             MB_ML_VER: _1_2
-          - os: ubuntu-latest
+          - os: ubuntu-24.04
             PLAT: loongarch64
             INTERFACE64: '0'
             MB_ML_LIBC: musllinux
