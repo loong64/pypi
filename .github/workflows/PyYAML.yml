@@ -32,11 +32,9 @@ jobs:
 
           - { NAME: "manylinux2014_ppc64le", CONTAINER: "manylinux2014_ppc64le", RUNNER: "ubuntu-24.04" }
           - { NAME: "manylinux_2_28_ppc64le", CONTAINER: "manylinux_2_28_ppc64le", RUNNER: "ubuntu-24.04" }
-          - { NAME: "musllinux_1_2_ppc64le", CONTAINER: "musllinux_1_2_ppc64le", RUNNER: "ubuntu-24.04" }
 
           - { NAME: "manylinux2014_s390x", CONTAINER: "manylinux2014_s390x", RUNNER: "ubuntu-24.04" }
           - { NAME: "manylinux_2_28_s390x", CONTAINER: "manylinux_2_28_s390x", RUNNER: "ubuntu-24.04" }
-          - { NAME: "musllinux_1_2_s390x", CONTAINER: "musllinux_1_2_s390x", RUNNER: "ubuntu-24.04" }
 
           - { NAME: "manylinux_2_38_loongarch64", CONTAINER: "manylinux_2_38_loongarch64", RUNNER: "ubuntu-24.04" }
           - { NAME: "musllinux_1_2_loongarch64", CONTAINER: "musllinux_1_2_loongarch64", RUNNER: "ubuntu-24.04" }

@@ -66,7 +66,7 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           # CIBW_BEFORE_ALL_LINUX: >
-          #   (command -v dnf && dnf autoremove -y gcc-toolset-14-binutils gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-gcc-gfortran gcc-toolset-14-libatomic-devel && dnf install -y binutils gcc gcc-c++ gcc-gfortran libatomic-static protobuf-devel protobuf-compiler) || true
+          #   (command -v yum && yum autoremove -y gcc-toolset-14-binutils gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-gcc-gfortran gcc-toolset-14-libatomic-devel && dnf install -y binutils gcc gcc-c++ gcc-gfortran libatomic-static protobuf-devel protobuf-compiler) || true
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel
