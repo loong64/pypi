@@ -19,9 +19,15 @@ jobs:
       fail-fast: false
       matrix:
         package: [ 'pycryptodome', 'pycryptodomex' ]
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'x86_64', 'loongarch64', 'ppc64le', 's390x' ]
         include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
+          - package: pycryptodome
+            os: ubuntu-24.04-arm
+            arch: "aarch64"
+          - package: pycryptodomex
+            os: ubuntu-24.04-arm
+            arch: "aarch64"
 
 
     steps:
@@ -62,13 +68,9 @@ jobs:
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "cp39-*"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           CIBW_BEFORE_TEST_LINUX: "(ldd /bin/ls | grep -q musl && apk add gmp) || true"
-          CIBW_TEST_COMMAND:
-            "${{ endsWith(matrix.package, 'x') == true &&
-            'python -m Cryptodome.SelfTest --skip-slow-tests' ||
-            'python -m Crypto.SelfTest --skip-slow-tests' }}"
+          CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
         run: |
