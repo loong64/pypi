@@ -23,9 +23,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        package: [ 'psycopg2', 'psycopg2-binary' ]
-        build: [ "manylinux_", "musllinux_" ]
-        arch: [ "loongarch64" ]
+        package: [psycopg2, psycopg2-binary]
+        platform: [manylinux, musllinux]
+        arch: [x86_64, aarch64, ppc64le, s390x, loongarch64]
 
     steps:
       - name: Get Source Code
@@ -44,10 +44,10 @@ jobs:
 
           case $package in
             psycopg2)
-              check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+              check_file="${package}-${version}-.*-${{ matrix.platform }}.*_${{ matrix.arch }}.whl"
               ;;
             psycopg2-binary)
-              check_file="psycopg2_binary-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+              check_file="psycopg2_binary-${version}-.*-${{ matrix.platform }}.*_${{ matrix.arch }}.whl"
               ;;
           esac
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
@@ -65,24 +65,35 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
           if [ -f "scripts/build/wheel_linux_before_all.sh" ]; then
-            sed -i 's@centos@opencloudos@g' scripts/build/wheel_linux_before_all.sh
+            if [ "${arch}" = "loongarch64" ]; then
+              sed -i 's@centos@anolis@g' scripts/build/wheel_linux_before_all.sh
+            fi
           fi
           if [ -f "scripts/build/build_libpq.sh" ]; then
-            sed -i 's@centos)@opencloudos)@g' scripts/build/build_libpq.sh scripts/build/print_so_versions.sh
-            sed -i 's@linux-pam-dev@linux-pam-dev perl-utils@g' scripts/build/build_libpq.sh
-            sed -i 's@pam-devel@pam-devel perl-lib perl-FindBin openldap-devel openssl-devel @g' scripts/build/build_libpq.sh
+            if [ "${arch}" = "loongarch64" ]; then
+              sed -i 's@centos)@anolis)@g' scripts/build/build_libpq.sh scripts/build/print_so_versions.sh
+              sed -i 's@linux-pam-dev@linux-pam-dev perl-utils@g' scripts/build/build_libpq.sh
+              sed -i 's@pam-devel@pam-devel perl-lib perl-FindBin openldap-devel openssl-devel@g' scripts/build/build_libpq.sh
+            fi
           fi
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
 
+      - name: Cache libpq build
+        if: env.BUILD != 'false'
+        uses: actions/cache@v3
+        with:
+          path: /tmp/libpq.build
+          key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
+
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
           CIBW_BEFORE_ALL_LINUX: ./scripts/build/wheel_linux_before_all.sh
           CIBW_REPAIR_WHEEL_COMMAND: >-
             ./scripts/build/strip_wheel.sh {wheel}
@@ -96,6 +107,7 @@ jobs:
             LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build
             PATH="$LIBPQ_BUILD_PREFIX/bin:$PATH"
             LD_LIBRARY_PATH="$LIBPQ_BUILD_PREFIX/lib:$LIBPQ_BUILD_PREFIX/lib64"
+          CIBW_SKIP: "pp*"
 
       - name: Check wheel
         run: |
