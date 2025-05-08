@@ -50,7 +50,52 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_loongarch64.whl"; then
+          case ${{ matrix.image }} in
+            *manylinux2014_aarch64)
+              check_file="${package}-${version}-.*manylinux2014_aarch64.whl"
+              ;;
+            *manylinux_2_28_aarch64)
+              check_file="${package}-${version}-.*manylinux_2_28_aarch64.whl"
+              ;;
+            *musllinux_1_2_aarch64)
+              check_file="${package}-${version}-.*musllinux_1_2_aarch64.whl"
+              ;;
+            *manylinux2014_ppc64le)
+              check_file="${package}-${version}-.*manylinux2014_ppc64le.whl"
+              ;;
+            *manylinux_2_28_ppc64le)
+              check_file="${package}-${version}-.*manylinux_2_28_ppc64le.whl"
+              ;;
+            *musllinux_1_2_ppc64le)
+              check_file="${package}-${version}-.*musllinux_1_2_ppc64le.whl"
+              ;;
+            *manylinux2014_s390x)
+              check_file="${package}-${version}-.*manylinux2014_s390x.whl"
+              ;;
+            *manylinux_2_28_s390x)
+              check_file="${package}-${version}-.*manylinux_2_28_s390x.whl"
+              ;;
+            *musllinux_1_2_s390x)
+              check_file="${package}-${version}-.*musllinux_1_2_s390x.whl"
+              ;;
+            *manylinux2014_x86_64)
+              check_file="${package}-${version}-.*manylinux2014_x86_64.whl"
+              ;;
+            *manylinux_2_28_x86_64)
+              check_file="${package}-${version}-.*manylinux_2_28_x86_64.whl"
+              ;;
+            *musllinux_1_2_x86_64)
+              check_file="${package}-${version}-.*musllinux_1_2_x86_64.whl"
+              ;;
+            *manylinux_2_38_loongarch64)
+              check_file="${package}-${version}-.*manylinux_2_38_loongarch64.whl"
+              ;;
+            *musllinux_1_2_loongarch64)
+              check_file="${package}-${version}-.*musllinux_1_2_loongarch64.whl"
+              ;;
+            esac
+
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0

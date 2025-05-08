@@ -9,7 +9,7 @@ on:
         type: string
         required: true
   schedule:
-    - cron: '0 17 * * *'
+    - cron: '0 15 * * *'
 
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         package: [psycopg2, psycopg2-binary]
-        platform: [manylinux, musllinux]
+        platform: [manylinux]
         arch: [x86_64, aarch64, ppc64le, s390x, loongarch64]
 
     steps:
@@ -65,16 +65,16 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
           if [ -f "scripts/build/wheel_linux_before_all.sh" ]; then
-            if [ "${arch}" = "loongarch64" ]; then
+            if [ "${{ matrix.arch }}" = "loongarch64" ]; then
               sed -i 's@centos@anolis@g' scripts/build/wheel_linux_before_all.sh
             fi
           fi
           if [ -f "scripts/build/build_libpq.sh" ]; then
-            if [ "${arch}" = "loongarch64" ]; then
+            if [ "${{ matrix.arch }}" = "loongarch64" ]; then
               sed -i 's@centos)@anolis)@g' scripts/build/build_libpq.sh scripts/build/print_so_versions.sh
-              sed -i 's@linux-pam-dev@linux-pam-dev perl-utils@g' scripts/build/build_libpq.sh
-              sed -i 's@pam-devel@pam-devel perl-lib perl-FindBin openldap-devel openssl-devel@g' scripts/build/build_libpq.sh
             fi
+            sed -i 's@linux-pam-dev@linux-pam-dev icu-dev perl-utils@g' scripts/build/build_libpq.sh
+            sed -i 's@pam-devel@pam-devel libicu-devel openldap-devel openssl-devel@g' scripts/build/build_libpq.sh
           fi
 
       - name: Setup QEMU

@@ -9,7 +9,7 @@ on:
         type: string
         required: true
   schedule:
-    - cron: '0 17 * * *'
+    - cron: '0 15 * * *'
 
 jobs:
   manylinux:
