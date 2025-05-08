@@ -18,13 +18,17 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'x86_64', 'loongarch64', 'ppc64le', 's390x' ]
+        build: [ "manylinux_", "musllinux_" ]
         include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
+          - os: ubuntu-24.04-arm
+            arch: "aarch64"
             build: "manylinux_"
-          - os: ubuntu-24.04
-            arch: "loongarch64"
+          - os: ubuntu-24.04-arm
+            arch: "aarch64"
             build: "musllinux_"
+
 
     steps:
       - name: Get Source Code
@@ -71,7 +75,7 @@ jobs:
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
             (command -v apk && apk add openssl-dev krb5-dev) || true &&
-            (command -v yum && yum autoremove -y gcc-toolset-14-binutils gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-gcc-gfortran gcc-toolset-14-libatomic-devel && yum -y install binutils gcc gcc-c++ gcc-gfortran libatomic-static openssl-devel krb5-devel) || true &&
+            (command -v yum && yum -y install openssl-devel krb5-devel) || true &&
             python3 ./dev/build.py --prefix=./deps --enable-krb5 --static-freetds
           CIBW_BEFORE_BUILD_LINUX: >
             pip install wheel
