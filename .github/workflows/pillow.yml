@@ -58,7 +58,7 @@ jobs:
 
           full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
+          if [ -z "$download_url" ] || [ ${{ matrix.arch }} != "loongarch64" ]; then
               echo "No source found for package ${package} version ${version}"
               echo "SOURCE=false" >> $GITHUB_ENV
               echo "VERSION=${version}" >> $GITHUB_ENV
