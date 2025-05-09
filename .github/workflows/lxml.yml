@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        arch: [ 'x86_64', 'aarch64', 'loongarch64', 'ppc64le', 's390x' ]
+        arch: [ 'loongarch64' ]
         build: [ 'manylinux_', 'musllinux_' ]
         python: [ 'cp38', 'cp39', 'cp310', 'cp311', 'cp312', 'cp313' ]
 
