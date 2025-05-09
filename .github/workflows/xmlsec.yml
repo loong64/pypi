@@ -162,6 +162,9 @@ jobs:
           if [ -f "pyproject.toml" ]; then
             sed -i 's/PYXMLSEC_STATIC_DEPS = "true"/# PYXMLSEC_STATIC_DEPS = "true""/g' pyproject.toml
           fi
+          if [ -f "src/enc.c" ]; then
+            sed -i 's/elem = PyXmlSec_elementFactory(doc, n);/elem = (PyXmlSec_LxmlElementPtr*)PyXmlSec_elementFactory(doc, n);/g' src/enc.c
+          fi
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
