@@ -72,6 +72,7 @@ jobs:
           if [ -f "scripts/build/build_libpq.sh" ]; then
             if [ "${{ matrix.arch }}" = "loongarch64" ]; then
               sed -i 's@centos)@anolis)@g' scripts/build/build_libpq.sh scripts/build/print_so_versions.sh
+              sed -i 's@pam-devel@perl-lib perl-FindBin pam-devel@g' scripts/build/build_libpq.sh
             fi
             sed -i 's@linux-pam-dev@linux-pam-dev icu-dev perl-utils@g' scripts/build/build_libpq.sh
             sed -i 's@pam-devel@pam-devel libicu-devel openldap-devel openssl-devel@g' scripts/build/build_libpq.sh
