@@ -45,6 +45,10 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
+          if [ ${{ matrix.arch }} = "loongarch64" ]; then
+            echo "CIBW_BEFORE_ALL_LINUX=(command -v apk && apk add tiff-dev jpeg-dev openjpeg-dev zlib-dev freetype-dev lcms2-dev libwebp-dev tcl-dev tk-dev harfbuzz-dev fribidi-dev libimagequant-dev libxcb-dev libpng-dev) && (command -v yum && yum install -y libtiff-devel libjpeg-devel openjpeg2-devel zlib-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel harfbuzz-devel fribidi-devel libraqm-devel libimagequant-devel libxcb-devel)" >> $GITHUB_ENV
+          fi
+
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
@@ -79,10 +83,6 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_ALL_LINUX: |
-            set -eux && \
-            (command -v apk && apk add tiff-dev jpeg-dev openjpeg-dev zlib-dev freetype-dev lcms2-dev libwebp-dev tcl-dev tk-dev harfbuzz-dev fribidi-dev libimagequant-dev libxcb-dev libpng-dev) || true && \
-            (command -v yum && yum install -y libtiff-devel libjpeg-devel openjpeg2-devel zlib-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel harfbuzz-devel fribidi-devel libraqm-devel libimagequant-devel libxcb-devel) || true
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           CIBW_SKIP: "pp*"
           CIBW_TEST_SKIP: "*"
