@@ -21,6 +21,18 @@ jobs:
           - target: loongarch64-unknown-linux-gnu
             arch: loongarch64
             manylinux: 'manylinux_2_36'
+          - target: x86_64-unknown-linux-gnu
+            arch: x86_64
+            manylinux: 'manylinux_2_28'
+          - target: aarch64-unknown-linux-gnu
+            arch: aarch64
+            manylinux: 'manylinux_2_28'
+          # - target: ppc64le-unknown-linux-gnu
+          #   arch: ppc64le
+          #   manylinux: 'manylinux_2_28'
+          - target: s390x-unknown-linux-gnu
+            arch: s390x
+            manylinux: 'manylinux_2_28'
           # - target: loongarch64-unknown-linux-musl
           #   arch: loongarch64
           #   manylinux: "musllinux_1_2"
@@ -100,9 +112,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - os: ubuntu-24.04
-          #   arch: "loongarch64"
-          #   build: "manylinux_"
+          - os: ubuntu-24.04
+            arch: "ppc64le"
+            build: "manylinux_"
           - os: ubuntu-24.04
             arch: "loongarch64"
             build: "musllinux_"
