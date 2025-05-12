@@ -127,12 +127,12 @@ jobs:
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_loongarch64" >> $GITHUB_ENV
               echo "CIBW_MANYLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
-            # musllinux_1_2_loongarch64)
-            #   check_file="${package}-${version}-.*musllinux_1_2_loongarch64.whl"
-            #   echo "CIBW_ARCHS=loongarch64" >> $GITHUB_ENV
-            #   echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-musllinux_loongarch64" >> $GITHUB_ENV
-            #   echo "CIBW_MUSLLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
-            #   ;;
+            musllinux_1_2_loongarch64)
+              check_file="${package}-${version}-.*musllinux_1_2_loongarch64.whl"
+              echo "CIBW_ARCHS=loongarch64" >> $GITHUB_ENV
+              echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-musllinux_loongarch64" >> $GITHUB_ENV
+              echo "CIBW_MUSLLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              ;;
             *)
               echo "BUILD=false" >> $GITHUB_ENV
               exit 0
