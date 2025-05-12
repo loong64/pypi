@@ -72,6 +72,7 @@ jobs:
         with:
           repository: python-pillow/Pillow
           ref: ${{ env.VERSION }}
+          submodules: true
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
