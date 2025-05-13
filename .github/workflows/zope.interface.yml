@@ -18,9 +18,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'x86_64', 'loongarch64', 'ppc64le', 's390x' ]
         include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
+          - os: ubuntu-24.04-arm
+            arch: "aarch64"
 
 
     steps:
@@ -62,6 +64,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_SKIP: "pp*"
 
       - name: Check wheel
         run: |
