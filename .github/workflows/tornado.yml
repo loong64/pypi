@@ -18,9 +18,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'x86_64', 'loongarch64', 'ppc64le', 's390x' ]
         include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
+          - os: ubuntu-24.04-arm
+            arch: "aarch64"
 
 
     steps:
@@ -38,7 +40,8 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_${{ matrix.arch }}.whl"; then
+          check_file="${package}-${version}-.*_${{ matrix.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -62,6 +65,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_SKIP: "pp*"
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
