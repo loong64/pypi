@@ -18,13 +18,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
-            build: "manylinux_"
-          # - os: ubuntu-24.04
-          #   arch: "loongarch64"
-          #   build: "musllinux_"
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+        build: [ "manylinux_", "musllinux_" ]
+        python: [ 'cp39', 'cp310', 'cp311', 'cp312', 'cp313' ]
 
     steps:
       - name: Get Source Code
@@ -64,7 +61,7 @@ jobs:
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
           # CIBW_BEFORE_ALL_LINUX: >
           #   (command -v yum && yum autoremove -y gcc-toolset-14-binutils gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-gcc-gfortran gcc-toolset-14-libatomic-devel && dnf install -y binutils gcc gcc-c++ gcc-gfortran libatomic-static protobuf-devel protobuf-compiler) || true
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
