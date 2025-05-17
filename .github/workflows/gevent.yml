@@ -46,7 +46,7 @@ jobs:
 
           echo "VERSION=${version}" >> $GITHUB_ENV
 
-      - name: checkout
+      - name: Checkout
         if: env.BUILD != 'false'
         uses: actions/checkout@v4
         with:
