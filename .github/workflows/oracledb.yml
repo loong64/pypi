@@ -46,14 +46,24 @@ jobs:
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
+          echo "VERSION=v${version}" >> $GITHUB_ENV
 
-          wget -O - "$download_url" | tar xz --strip-components=1
+          # full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          # download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          # if [ -z "$download_url" ]; then
+          #     echo "No source found for package ${package} version ${version}"
+          #     exit 1
+          # fi
+
+          # wget -O - "$download_url" | tar xz --strip-components=1
+
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: oracle/python-oracledb
+          ref: ${{ env.VERSION }}
+          submodules: true
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -64,6 +74,8 @@ jobs:
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD_FRONTEND: "build"
           CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL PYO_COMPILE_ARGS"
           CIBW_SKIP: "pp*"
 
