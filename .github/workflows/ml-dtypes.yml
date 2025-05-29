@@ -20,6 +20,10 @@ jobs:
         include:
           - os: ubuntu-24.04
             arch: "loongarch64"
+            build: "manylinux_"
+          - os: ubuntu-24.04
+            arch: "loongarch64"
+            build: "musllinux_"
 
 
     steps:
@@ -37,7 +41,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          check_file="ml_dtypes-${version}-.*_${{ matrix.arch }}.whl"
+          check_file="ml_dtypes-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
