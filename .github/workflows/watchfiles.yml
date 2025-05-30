@@ -1,4 +1,4 @@
-name: build (jiter)
+name: build (watchfiles)
 
 on:
   workflow_dispatch:
@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Get Source Code
         run: |
-          package=jiter
+          package=watchfiles
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
