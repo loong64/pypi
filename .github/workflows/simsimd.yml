@@ -1,4 +1,4 @@
-name: build (swig)
+name: build (simsimd)
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Get Source Code
         run: |
-          package=swig
+          package=simsimd
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -67,9 +67,11 @@ jobs:
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "cp39-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           CIBW_SKIP: "pp*"
+          CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
         run: |
