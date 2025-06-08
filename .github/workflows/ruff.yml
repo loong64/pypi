@@ -1,4 +1,4 @@
-name: build (uv)
+name: build (ruff)
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
     steps:
       - name: Get Source Code
         run: |
-          package=uv
+          package=ruff
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
