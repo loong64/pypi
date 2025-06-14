@@ -52,9 +52,8 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's/^manylinux-.*-image/# &/' pyproject.toml
-          sed -i 's/^musllinux-.*-image/# &/' pyproject.toml
-          sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
+          sed -i 's/, "pypy-eol"//g' pyproject.toml
+
           if [ -f "tools/install_libzmq.sh" ]; then
             sed -i '/cd zeromq-/a\curl -L -o config/config.guess "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess"' tools/install_libzmq.sh
             sed -i '/cd zeromq-/a\curl -L -o config/config.sub "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub"' tools/install_libzmq.sh
@@ -71,6 +70,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_SKIP: "pp*"
 
       - name: Check wheel
         run: |
