@@ -100,6 +100,10 @@ jobs:
         run: |
           sed -i 's@quay.io/pypa@ghcr.io/loong64@g' tools/build_steps.sh
           echo -n > OpenBLAS/utest/test_kernel_regress.c
+          if [[ "${{ matrix.MB_ML_LIBC }}" = "musllinux" ]]; then
+            mkdir -p patches
+            wget -qO patches/0001-fix-loongarch64-musllinux-test.patch https://github.com/loong64/openblas-libs/raw/refs/heads/patch_loong64/patches/0001-fix-loongarch64-musllinux-test.patch
+          fi
           set -xeo pipefail
           source tools/build_steps.sh
           echo "------ BEFORE BUILD ---------"
