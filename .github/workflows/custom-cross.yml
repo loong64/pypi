@@ -1,0 +1,87 @@
+name: Custom Cross Build Package
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_name:
+        description: 'Package name to build'
+        required: true
+        default: ''
+      app_repo:
+        description: 'Repository URL for the package'
+        required: true
+        default: ''
+      app_version:
+        description: 'Package version pattern'
+        required: true
+        default: 'latest'
+      build_args:
+        description: 'Package build arguments'
+        required: true
+        default: '--release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13'
+
+env:
+  COLUMNS: 120
+  UV_PYTHON: 3.12
+  UV_FROZEN: "1"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - target: loongarch64-unknown-linux-gnu
+            arch: loongarch64
+            manylinux: 'manylinux_2_36'
+          - target: "loongarch64-unknown-linux-musl"
+            arch: loongarch64
+            manylinux: "musllinux_1_2"
+
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=${{ github.event.inputs.app_name }}
+          version=${{ github.event.inputs.app_version }}
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+
+          echo "VERSION=v${version}" >> $GITHUB_ENV
+
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.inputs.app_repo }}
+          ref: ${{ env.VERSION }}
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Build wheels
+        uses: loong64/maturin-action@main
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: ${{ github.event.inputs.build_args }}
+          docker-options: -e CARGO_TARGET_LOONGARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS
+
+      - name: Check wheel
+        run: |
+          ls -al dist/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        run: |
+          pip install twine==6.0.1
+          for file in dist/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}

@@ -13,7 +13,7 @@ on:
         default: 'latest'
 
 jobs:
-  prepare:
+  build:
     runs-on: ubuntu-24.04
     steps:
       - name: Get versions
@@ -27,12 +27,6 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_loongarch64.whl"; then
-            echo "Package ${package} ${version} already exists"
-            echo "BUILD=false" >> $GITHUB_ENV
-            exit 0
-          fi
-
           full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
           if [ -z "$download_url" ]; then
@@ -42,11 +36,9 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
       - name: Setup QEMU
-        if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
 
       - name: Build wheels
-        if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v2.23.2
         env:
           CIBW_ARCHS: loongarch64
@@ -59,7 +51,6 @@ jobs:
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
-        if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
           for file in wheelhouse/*.whl; do
