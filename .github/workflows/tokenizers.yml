@@ -70,7 +70,6 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release --out dist --manifest-path bindings/python/Cargo.toml
-          sccache: 'true'
 
       - name: Check wheel
         run: |

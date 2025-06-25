@@ -69,7 +69,6 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           args: ${{ github.event.inputs.build_args }}
-          docker-options: -e CARGO_TARGET_LOONGARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS
 
       - name: Check wheel
         run: |

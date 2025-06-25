@@ -33,9 +33,9 @@ jobs:
           - target: s390x-unknown-linux-gnu
             arch: s390x
             manylinux: 'manylinux_2_28'
-          # - target: loongarch64-unknown-linux-musl
-          #   arch: loongarch64
-          #   manylinux: "musllinux_1_2"
+          - target: loongarch64-unknown-linux-musl
+            arch: loongarch64
+            manylinux: "musllinux_1_2"
 
     steps:
       - name: Get Source Code
