@@ -75,7 +75,7 @@ jobs:
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
-          CIBW_SKIP: "pp*"
+          CIBW_SKIP: pp*
 
       - name: Check wheel
         run: |
