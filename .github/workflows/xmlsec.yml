@@ -71,9 +71,15 @@ jobs:
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v2.23.2
         env:
+          CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux_2_28_x86_64
+          CIBW_MANYLINUX_AARCH64_IMAGE: quay.io/pypa/manylinux_2_28_aarch64
+          CIBW_MANYLINUX_PPC64LE_IMAGE: quay.io/pypa/manylinux_2_28_ppc64le
+          CIBW_MANYLINUX_S390X_IMAGE: quay.io/pypa/manylinux_2_28_s390x
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           CIBW_SKIP: "pp*"
           CIBW_TEST_SKIP: "*"
 
