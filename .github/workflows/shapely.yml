@@ -41,7 +41,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          check_file="levenshtein-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
@@ -95,6 +95,7 @@ jobs:
           cache-to: type=gha,mode=max,scope=manylinux_2_38_loongarch64
 
       - name: Add GEOS LICENSE
+        if: env.BUILD != 'false'
         run: cp ci/wheelbuilder/LICENSE_GEOS .
 
       - name: Build wheels

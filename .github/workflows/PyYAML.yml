@@ -56,73 +56,73 @@ jobs:
 
           case "${{ matrix.MANYLINUX.NAME }}" in
             manylinux2014_x86_64)
-              check_file="${package}-${version}-.*manylinux2014_x86_64.whl"
+              check_file="pyyaml-${version}-.*manylinux2014_x86_64.whl"
               echo "CIBW_ARCHS=x86_64" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_x86_64" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             manylinux_2_28_x86_64)
-              check_file="${package}-${version}-.*manylinux_2_28_x86_64.whl"
+              check_file="pyyaml-${version}-.*manylinux_2_28_x86_64.whl"
               echo "CIBW_ARCHS=x86_64" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_x86_64" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             musllinux_1_2_x86_64)
-              check_file="${package}-${version}-.*musllinux_1_2_x86_64.whl"
+              check_file="pyyaml-${version}-.*musllinux_1_2_x86_64.whl"
               echo "CIBW_ARCHS=x86_64" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-musllinux_x86_64" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=ghcr.io/loong64/alpine:3.21" >> $GITHUB_ENV
               ;;
             manylinux2014_aarch64)
-              check_file="${package}-${version}-.*manylinux2014_aarch64.whl"
+              check_file="pyyaml-${version}-.*manylinux2014_aarch64.whl"
               echo "CIBW_ARCHS=aarch64" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_aarch64" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             manylinux_2_28_aarch64)
-              check_file="${package}-${version}-.*manylinux_2_28_aarch64.whl"
+              check_file="pyyaml-${version}-.*manylinux_2_28_aarch64.whl"
               echo "CIBW_ARCHS=aarch64" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_aarch64" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             musllinux_1_2_aarch64)
-              check_file="${package}-${version}-.*musllinux_1_2_aarch64.whl"
+              check_file="pyyaml-${version}-.*musllinux_1_2_aarch64.whl"
               echo "CIBW_ARCHS=aarch64" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-musllinux_aarch64" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=ghcr.io/loong64/alpine:3.21" >> $GITHUB_ENV
               ;;
             manylinux2014_ppc64le)
-              check_file="${package}-${version}-.*manylinux2014_ppc64le.whl"
+              check_file="pyyaml-${version}-.*manylinux2014_ppc64le.whl"
               echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_ppc64le" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             manylinux_2_28_ppc64le)
-              check_file="${package}-${version}-.*manylinux_2_28_ppc64le.whl"
+              check_file="pyyaml-${version}-.*manylinux_2_28_ppc64le.whl"
               echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_ppc64le" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             musllinux_1_2_ppc64le)
-              check_file="${package}-${version}-.*musllinux_1_2_ppc64le.whl"
+              check_file="pyyaml-${version}-.*musllinux_1_2_ppc64le.whl"
               echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-musllinux_ppc64le" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=ghcr.io/loong64/alpine:3.21" >> $GITHUB_ENV
               ;;
             manylinux2014_s390x)
-              check_file="${package}-${version}-.*manylinux2014_s390x.whl"
+              check_file="pyyaml-${version}-.*manylinux2014_s390x.whl"
               echo "CIBW_ARCHS=s390x" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_s390x" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             manylinux_2_28_s390x)
-              check_file="${package}-${version}-.*manylinux_2_28_s390x.whl"
+              check_file="pyyaml-${version}-.*manylinux_2_28_s390x.whl"
               echo "CIBW_ARCHS=s390x" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-manylinux_s390x" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=quay.io/pypa/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             musllinux_1_2_s390x)
-              check_file="${package}-${version}-.*musllinux_1_2_s390x.whl"
+              check_file="pyyaml-${version}-.*musllinux_1_2_s390x.whl"
               echo "CIBW_ARCHS=s390x" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-musllinux_s390x" >> $GITHUB_ENV
               echo "DOCKER_IMAGE=ghcr.io/loong64/alpine:3.21" >> $GITHUB_ENV

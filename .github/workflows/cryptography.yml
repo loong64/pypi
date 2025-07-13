@@ -55,7 +55,7 @@ jobs:
 
           case "${{ matrix.MANYLINUX.NAME }}" in
             manylinux2014_x86_64)
-              check_file="${package}-${version}-.*manylinux2014_x86_64.whl"
+              check_file="${package}-${version}-.*manylinux_2_17_x86_64.whl"
               echo "CIBW_ARCHS=x86_64" >> $GITHUB_ENV
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_x86_64" >> $GITHUB_ENV
               echo "CIBW_MANYLINUX_X86_64_IMAGE=ghcr.io/pyca/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
@@ -73,7 +73,7 @@ jobs:
               echo "CIBW_MUSLLINUX_X86_64_IMAGE=ghcr.io/pyca/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             manylinux2014_aarch64)
-              check_file="${package}-${version}-.*manylinux2014_aarch64.whl"
+              check_file="${package}-${version}-.*manylinux_2_17_aarch64.whl"
               echo "CIBW_ARCHS=aarch64" >> $GITHUB_ENV
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_aarch64" >> $GITHUB_ENV
               echo "CIBW_MANYLINUX_AARCH64_IMAGE=ghcr.io/pyca/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
@@ -91,7 +91,7 @@ jobs:
               echo "CIBW_MUSLLINUX_AARCH64_IMAGE=ghcr.io/pyca/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             manylinux2014_ppc64le)
-              check_file="${package}-${version}-.*manylinux2014_ppc64le.whl"
+              check_file="${package}-${version}-.*manylinux_2_17_ppc64le.whl"
               echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_ppc64le" >> $GITHUB_ENV
               echo "CIBW_MANYLINUX_PPC64LE_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
@@ -109,7 +109,7 @@ jobs:
               echo "CIBW_MUSLLINUX_PPC64LE_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             manylinux2014_s390x)
-              check_file="${package}-${version}-.*manylinux2014_s390x.whl"
+              check_file="${package}-${version}-.*manylinux_2_17_s390x.whl"
               echo "CIBW_ARCHS=s390x" >> $GITHUB_ENV
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_s390x" >> $GITHUB_ENV
               echo "CIBW_MANYLINUX_S390X_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
