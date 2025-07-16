@@ -55,8 +55,8 @@ jobs:
           sed -i 's/, "pypy-eol"//g' pyproject.toml
 
           if [ -f "tools/install_libzmq.sh" ]; then
-            sed -i '/cd zeromq-/a\curl -L -o config/config.guess "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.guess"' tools/install_libzmq.sh
-            sed -i '/cd zeromq-/a\curl -L -o config/config.sub "https://git.savannah.gnu.org/gitweb/?p=config.git;a=blob_plain;f=config.sub"' tools/install_libzmq.sh
+            sed -i '/cd zeromq-/a\curl -L -o config/config.guess "https://github.com/cgitmirror/config/raw/refs/heads/master/config.guess"' tools/install_libzmq.sh
+            sed -i '/cd zeromq-/a\curl -L -o config/config.sub "https://github.com/cgitmirror/config/raw/refs/heads/master/config.sub"' tools/install_libzmq.sh
             sed -i '/cd zeromq-/a\rm -f config/config.guess config/config.sub' tools/install_libzmq.sh
           fi
 
