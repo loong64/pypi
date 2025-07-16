@@ -46,8 +46,6 @@ jobs:
             exit 0
           fi
 
-          echo "VERSION=v${version}" >> $GITHUB_ENV
-
           full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
           if [ -z "$download_url" ]; then
@@ -55,7 +53,7 @@ jobs:
             exit 1
           fi
 
-          # wget -O - "$download_url" | tar xz --strip-components=1
+          wget -O - "$download_url" | tar xz --strip-components=1
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -68,7 +66,6 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL PYO_COMPILE_ARGS"
-          CIBW_SKIP: "pp*"
 
       - name: Check wheel
         run: |
