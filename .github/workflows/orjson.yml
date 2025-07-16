@@ -11,16 +11,37 @@ on:
   schedule:
     - cron: '0 17 * * *'
 
+env:
+  CARGO_UNSTABLE_SPARSE_REGISTRY: "true"
+  FORCE_COLOR: "1"
+  PIP_DISABLE_PIP_VERSION_CHECK: "1"
+  RUST_TOOLCHAIN: "nightly-2025-04-15"
+  UNSAFE_PYO3_BUILD_FREE_THREADED: "1"
+  UNSAFE_PYO3_SKIP_VERSION_CHECK: "1"
+  UV_LINK_MODE: "copy"
+
 jobs:
-  build_wheels:
-    name: Build ${{ matrix.arch }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  manylinux_cross:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-24.04' ]
-        arch: [ 'loongarch64' ]
-        build: [ "manylinux_" ]
+        python: [
+          { interpreter: 'python3.13', abi: 'cp313-cp313' },
+          { interpreter: 'python3.12', abi: 'cp312-cp312' },
+          { interpreter: 'python3.11', abi: 'cp311-cp311' },
+          { interpreter: 'python3.10', abi: 'cp310-cp310' },
+          { interpreter: 'python3.9', abi: 'cp39-cp39' },
+        ]
+        target: [
+          {
+            arch: 'loongarch64',
+            cflags: '-Os -fstrict-aliasing',
+            features: 'yyjson',
+            rustflags: '-Z mir-opt-level=4 -C lto=fat -D warnings',
+            target: 'loongarch64-unknown-linux-gnu',
+          },
+        ]
 
 
     steps:
@@ -37,46 +58,54 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-          echo "PYO_COMPILE_ARGS=-g0" >> $GITHUB_ENV
 
-          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          check_file="${package}-${version}-.*-manylinux_2_36_loongarch64.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-            echo "No source found for package ${package} version ${version}"
-            exit 1
-          fi
+          echo "VERSION=${version}" >> $GITHUB_ENV
 
-          wget -O - "$download_url" | tar xz --strip-components=1
-
-      - name: Setup QEMU
+      - name: Checkout
         if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
+        uses: actions/checkout@v4
+        with:
+          repository: ijl/orjson
+          ref: ${{ env.VERSION }}
+
+      - name: build-std
+        if: env.BUILD != 'false'
+        run: |
+          mkdir .cargo
+          cp ci/config.toml .cargo/config.toml
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v2.23.2
+        uses: loong64/maturin-action@main
         env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL PYO_COMPILE_ARGS"
+          PYO3_CROSS_LIB_DIR: "/opt/python/${{ matrix.python.abi }}"
+          CFLAGS: "${{ matrix.target.cflags }}"
+          LDFLAGS: "-Wl,--as-needed"
+          RUSTFLAGS: "${{ matrix.target.rustflags }}"
+        with:
+          target: "${{ matrix.target.target }}"
+          rust-toolchain: "${{ env.RUST_TOOLCHAIN }}"
+          rustup-components: rust-src
+          manylinux: manylinux_2_36
+          args: --release --strip --out=dist --features=${{ matrix.target.features }} -i ${{ matrix.python.interpreter }}
 
       - name: Check wheel
         run: |
-          ls -al wheelhouse/*.whl || exit 0
+          ls -al dist/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in wheelhouse/*.whl; do
+          for file in dist/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:
