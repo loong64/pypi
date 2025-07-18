@@ -100,7 +100,7 @@ jobs:
               check_file="${package}-${version}-.*manylinux_2_28_ppc64le.whl"
               echo "CIBW_ARCHS=ppc64le" >> $GITHUB_ENV
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_ppc64le" >> $GITHUB_ENV
-              echo "CIBW_MANYLINUX_PPC64LE_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
+              echo "CIBW_MANYLINUX_PPC64LE_IMAGE=ghcr.io/pyca/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             musllinux_1_2_ppc64le)
               check_file="${package}-${version}-.*musllinux_1_2_ppc64le.whl"
