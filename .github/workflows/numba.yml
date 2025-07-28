@@ -1,0 +1,139 @@
+name: build (numba)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  schedule:
+    - cron: '0 17 * * *'
+
+env:
+  WHEELS_INDEX_URL: https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple
+  MANYLINUX_IMAGE: "manylinux_2_38_loongarch64"
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+        build: [ "manylinux_" ]
+        python-version: [ 'cp310', 'cp311', 'cp312', 'cp313' ]
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=numba
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          if [ -z "$download_url" ]; then
+              echo "No source found for package ${package} version ${version}"
+              exit 1
+          fi
+          wget -O - "$download_url" | tar xz --strip-components=1
+
+          if [ ! -d "buildscripts/github" ]; then
+            mkdir -p "buildscripts/github"
+            wget -qO buildscripts/github/build_wheel_linux.sh https://github.com/numba/numba/raw/refs/heads/main/buildscripts/github/build_wheel_linux.sh
+            wget -qO buildscripts/github/repair_wheel_linux.sh https://github.com/numba/numba/raw/refs/heads/main/buildscripts/github/repair_wheel_linux.sh
+          fi
+          if [ ! -f "buildscripts/github/build_wheel_linux.sh" ]; then
+            wget -qO buildscripts/github/build_wheel_linux.sh https://github.com/numba/numba/raw/refs/tags/${version}/buildscripts/github/build_wheel_linux.sh
+          fi
+          if [ ! -f "buildscripts/github/repair_wheel_linux.sh" ]; then
+            wget -qO buildscripts/github/repair_wheel_linux.sh https://github.com/numba/numba/raw/refs/tags/${version}/buildscripts/github/repair_wheel_linux.sh
+          fi
+          sudo chmod +x buildscripts/github/*.sh
+
+      - name: Setup QEMU
+        if: env.BUILD != 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Build wheel in manylinux docker container
+        run: |
+          case ${{ matrix.python-version }} in
+            cp313)
+              numpy_build=2.1.3
+              ;;
+            *)
+              numpy_build=2.0.2
+              ;;
+          esac
+          python_tag=${{ matrix.python-version }}
+          # Construct the expected Python executable path inside the container
+          PYTHON_EXECUTABLE="/opt/python/${python_tag}-${python_tag}/bin/python"
+          echo "Using Python executable: $PYTHON_EXECUTABLE"
+
+          # Prepare build environment
+          mkdir -p dist wheelhouse
+          chmod +x buildscripts/github/build_wheel_linux.sh
+          chmod +x buildscripts/github/repair_wheel_linux.sh
+
+          # Run the build script inside Docker container
+          docker run --rm \
+            -e PIP_EXTRA_INDEX_URL=${{ env.WHEELS_INDEX_URL }} \
+            -v ${{ github.workspace }}:/io \
+            ghcr.io/loong64/${{ env.MANYLINUX_IMAGE }} \
+            /io/buildscripts/github/build_wheel_linux.sh \
+            "${PYTHON_EXECUTABLE}" \
+            "false" \
+            "${numpy_build}" \
+            "/io/llvmlite_wheels" \
+            "${WHEELS_INDEX_URL}"
+
+          # List built wheels
+          ls -la wheelhouse/
+
+      - name: Repair and patch wheel in manylinux docker container
+        run: |
+          python_tag=${{ matrix.python-version }}
+          # Construct the expected Python executable path inside the container
+          PYTHON_EXECUTABLE="/opt/python/${python_tag}-${python_tag}/bin/python"
+          echo "Using Python executable: $PYTHON_EXECUTABLE"
+
+          # Run the repair script in Docker
+          docker run --rm \
+            -e PIP_EXTRA_INDEX_URL=${{ env.WHEELS_INDEX_URL }} \
+            -v ${{ github.workspace }}:/io \
+            ghcr.io/loong64/${{ env.MANYLINUX_IMAGE }} \
+            /io/buildscripts/github/repair_wheel_linux.sh \
+            "${PYTHON_EXECUTABLE}" \
+            "false" \
+            "/io/wheelhouse"
+
+          # List repaired wheels
+          ls -al wheelhouse/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
