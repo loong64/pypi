@@ -72,6 +72,7 @@ jobs:
         uses: docker/setup-qemu-action@v3
 
       - name: Build wheel in manylinux docker container
+        if: env.BUILD != 'false'
         run: |
           case ${{ matrix.python-version }} in
             cp313)
@@ -107,6 +108,7 @@ jobs:
           ls -la wheelhouse/
 
       - name: Repair and patch wheel in manylinux docker container
+        if: env.BUILD != 'false'
         run: |
           python_tag=${{ matrix.python-version }}
           # Construct the expected Python executable path inside the container
