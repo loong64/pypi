@@ -21,6 +21,7 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
+        python: [ 'cp39', 'cp310', 'cp311', 'cp312', 'cp313' ]
 
 
     steps:
@@ -60,10 +61,10 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.1.2
+        uses: loong64/cibuildwheel@v3.0.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL"
 
       - name: Check wheel
