@@ -50,7 +50,7 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
 
-          echo "VERSION=v${version}" >> $GITHUB_ENV
+          echo "VERSION=${version}" >> $GITHUB_ENV
 
       - name: Checkout
         uses: actions/checkout@v4

@@ -57,21 +57,38 @@ jobs:
           repository: apache/opendal
           ref: ${{ env.VERSION }}
 
-      - name: set up python
+      - name: Build abi3 wheels
         if: env.BUILD != 'false'
-        uses: actions/setup-python@v5
+        uses: loong64/maturin-action@main
         with:
-          python-version: 3.x
+          working-directory: "bindings/python"
+          target: "${{ matrix.platform.target }}"
+          command: build
+          args: --release -o dist -i python3.11 --features=pyo3/extension-module,services-all,abi3
+          sccache: true
+          manylinux: ${{ matrix.platform.manylinux || 'auto' }}
 
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: loong64/maturin-action@main
         with:
-          target: ${{ matrix.platform.target }}
-          manylinux: ${{ matrix.platform.manylinux }}
           working-directory: "bindings/python"
+          target: "${{ matrix.platform.target }}"
           command: build
-          args: --release -o dist --find-interpreter --features=pyo3/extension-module,services-all
+          args: --release -o dist -i python3.10 --features=pyo3/extension-module,services-all
+          sccache: true
+          manylinux: ${{ matrix.platform.manylinux || 'auto' }}
+
+      - name: Build free-threaded wheels
+        if: env.BUILD != 'false'
+        uses: loong64/maturin-action@main
+        with:
+          working-directory: "bindings/python"
+          target: "${{ matrix.platform.target }}"
+          command: build
+          args: --release -o dist -i python3.13t --features=pyo3/extension-module,services-all,abi3
+          sccache: true
+          manylinux: ${{ matrix.platform.manylinux || 'auto' }}
 
       - name: Check wheel
         run: |
