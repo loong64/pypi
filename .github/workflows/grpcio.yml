@@ -38,8 +38,6 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-          echo "GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=1" >> $GITHUB_ENV
-          echo "GRPC_PYTHON_BUILD_SYSTEM_ZLIB=1" >> $GITHUB_ENV
 
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
@@ -57,21 +55,20 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
+          cd third_party/boringssl-with-bazel/src
+          wget -O - https://github.com/loong64/boringssl/commit/6a809aa564245c3c306969196b1faa7ecee45d41.patch | patch -p1
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v2.23.2
+        uses: loong64/cibuildwheel@v3.1.2
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_ALL_LINUX: >
-            (command -v apk && apk add openssl-dev zlib-dev) || true &&
-            (command -v yum && yum -y install openssl-devel zlib-devel) || true 
-          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL GRPC_PYTHON_BUILD_SYSTEM_OPENSSL GRPC_PYTHON_BUILD_SYSTEM_ZLIB"
-          CIBW_SKIP: "pp*"
+          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL"
 
       - name: Check wheel
         run: |
