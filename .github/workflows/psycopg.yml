@@ -1,0 +1,131 @@
+name: build (psycopg-binary)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  schedule:
+    - cron: '0 15 * * *'
+
+env:
+  LIBPQ_VERSION: "17.5"
+  OPENSSL_VERSION: "3.5.0"
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.arch }} wheels on ubuntu-24.04
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [psycopg-binary]
+        platform: [manylinux, musllinux]
+        arch: [loongarch64]
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=${{ matrix.package }}
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+
+          check_file="psycopg_binary-${version}-.*-${{ matrix.platform }}.*_${{ matrix.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+          echo "VERSION=${version}" >> $GITHUB_ENV
+        
+      - name: checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: psycopg/psycopg
+          ref: ${{ env.VERSION }}
+
+      - name: Setup QEMU
+        if: env.BUILD != 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Prepare build
+        if: env.BUILD != 'false'
+        run: |
+          if [ -f "tools/build/wheel_linux_before_all.sh" ]; then
+            if [ "${{ matrix.arch }}" = "loongarch64" ]; then
+              sed -i 's@centos@anolis@g' tools/build/wheel_linux_before_all.sh
+            fi
+          fi
+          if [ -f "tools/build/build_libpq.sh" ]; then
+            if [ "${{ matrix.arch }}" = "loongarch64" ]; then
+              sed -i 's@centos)@anolis)@g' tools/build/build_libpq.sh tools/build/print_so_versions.sh
+              sed -i 's@pam-devel@perl-lib perl-FindBin pam-devel@g' tools/build/build_libpq.sh
+            fi
+            sed -i 's@linux-pam-dev@linux-pam-dev icu-dev perl-utils@g' tools/build/build_libpq.sh
+            sed -i 's@pam-devel@pam-devel libicu-devel openldap-devel openssl-devel@g' tools/build/build_libpq.sh
+          fi
+
+      - name: Cache libpq build
+        if: env.BUILD != 'false'
+        uses: actions/cache@v3
+        with:
+          path: /tmp/libpq.build
+          key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}
+
+      - name: Create the binary package source tree
+        run: python3 ./tools/build/copy_to_binary.py
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        uses: loong64/cibuildwheel@v2.23.2
+        with:
+          package-dir: psycopg_binary
+        env:
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
+          CIBW_BEFORE_ALL_LINUX: ./tools/build/wheel_linux_before_all.sh
+          CIBW_REPAIR_WHEEL_COMMAND: >-
+            ./tools/build/strip_wheel.sh {wheel}
+            && auditwheel repair -w {dest_dir} {wheel}
+          # CIBW_TEST_REQUIRES: ./psycopg[test] ./psycopg_pool
+          # CIBW_TEST_COMMAND: >-
+            # pytest {project}/tests -m 'not slow and not flakey' --color yes
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL LIBPQ_VERSION OPENSSL_VERSION
+          CIBW_ENVIRONMENT: >-
+            PSYCOPG_IMPL=binary
+            PSYCOPG_TEST_DSN='host=172.17.0.1 user=postgres'
+            PGPASSWORD=password
+            LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build
+            PATH="$LIBPQ_BUILD_PREFIX/bin:$PATH"
+            LD_LIBRARY_PATH="$LIBPQ_BUILD_PREFIX/lib:$LIBPQ_BUILD_PREFIX/lib64"
+            PSYCOPG_TEST_WANT_LIBPQ_BUILD=${{ env.LIBPQ_VERSION }}
+            PSYCOPG_TEST_WANT_LIBPQ_IMPORT=${{ env.LIBPQ_VERSION }}
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
+
+      - name: Check wheel
+        run: |
+          ls -al wheelhouse/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
