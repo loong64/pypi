@@ -84,7 +84,7 @@ jobs:
 
       - name: Cache libpq build
         if: env.BUILD != 'false'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/libpq.build
           key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
@@ -96,14 +96,14 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
           CIBW_BEFORE_ALL_LINUX: ./scripts/build/wheel_linux_before_all.sh
-          CIBW_REPAIR_WHEEL_COMMAND: >-
+          CIBW_REPAIR_WHEEL_COMMAND: >
             ./scripts/build/strip_wheel.sh {wheel}
             && auditwheel repair -w {dest_dir} {wheel}
-          # CIBW_TEST_COMMAND: >-
+          # CIBW_TEST_COMMAND: >
             # export PYTHONPATH={project} &&
             # python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL LIBPQ_VERSION OPENSSL_VERSION
-          CIBW_ENVIRONMENT: >-
+          CIBW_ENVIRONMENT: >
             PACKAGE_NAME=${{ matrix.package }}
             LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build
             PATH="$LIBPQ_BUILD_PREFIX/bin:$PATH"

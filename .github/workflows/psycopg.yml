@@ -79,7 +79,7 @@ jobs:
 
       - name: Cache libpq build
         if: env.BUILD != 'false'
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/libpq.build
           key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}
@@ -96,14 +96,14 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
           CIBW_BEFORE_ALL_LINUX: ./tools/build/wheel_linux_before_all.sh
-          CIBW_REPAIR_WHEEL_COMMAND: >-
+          CIBW_REPAIR_WHEEL_COMMAND: 
             ./tools/build/strip_wheel.sh {wheel}
             && auditwheel repair -w {dest_dir} {wheel}
           # CIBW_TEST_REQUIRES: ./psycopg[test] ./psycopg_pool
-          # CIBW_TEST_COMMAND: >-
+          # CIBW_TEST_COMMAND: >
             # pytest {project}/tests -m 'not slow and not flakey' --color yes
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL LIBPQ_VERSION OPENSSL_VERSION
-          CIBW_ENVIRONMENT: >-
+          CIBW_ENVIRONMENT: >
             PSYCOPG_IMPL=binary
             PSYCOPG_TEST_DSN='host=172.17.0.1 user=postgres'
             PGPASSWORD=password
