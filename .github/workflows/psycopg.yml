@@ -85,6 +85,7 @@ jobs:
           key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}
 
       - name: Create the binary package source tree
+        if: env.BUILD != 'false'
         run: python3 ./tools/build/copy_to_binary.py
 
       - name: Build wheels
