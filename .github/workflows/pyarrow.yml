@@ -1,0 +1,109 @@
+name: build (pyarrow)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  schedule:
+    - cron: '0 15 * * *'
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.arch }} wheels on ubuntu-24.04
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            arch: "loongarch64"
+            build: "manylinux_"
+          # - os: ubuntu-24.04
+          #   arch: "loongarch64"
+          #   build: "musllinux_"
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=pyarrow
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+
+          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+          echo "VERSION=apache-arrow-${version}" >> $GITHUB_ENV
+
+          sudo mkdir -p /tmp/cache/ccache
+          sudo chown -R root:docker /tmp/cache/ccache
+
+      - name: checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: apache/arrow
+          ref: ${{ env.VERSION }}
+          submodules: true
+
+      - name: Setup QEMU
+        if: env.BUILD != 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Cache arrow build
+        if: env.BUILD != 'false'
+        uses: actions/cache@v4
+        with:
+          path: /tmp/cache/ccache
+          key: ${{ env.VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        uses: loong64/cibuildwheel@v2.23.2
+        env:
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            (command -v apk && apk add ccache ninja-build samurai) || true &&
+            (command -v yum && yum -y install ccache ninja-build) || true &&
+            cmake -S cpp -B cpp/build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$ARROW_HOME -DARROW_BUILD_STATIC=ON -DARROW_BUILD_SHARED=ON -DARROW_CSV=ON -DARROW_JSON=ON -DARROW_FILESYSTEM=ON -DARROW_COMPUTE=ON &&
+            cmake --build cpp/build --target install'
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT: >
+            ARROW_HOME=/tmp/local
+            ARROW_USE_CCACHE=ON
+            ARROW_BUILD_TYPE=release
+            CCACHE_DIR=/host/tmp/cache/ccache
+            CMAKE_PREFIX_PATH=$ARROW_HOME:$CMAKE_PREFIX_PATH
+            LD_LIBRARY_PATH=$ARROW_HOME/lib64:$LD_LIBRARY_PATH
+            PYARROW_PARALLEL=4
+
+      - name: Check wheel
+        run: |
+          ls -al wheelhouse/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
