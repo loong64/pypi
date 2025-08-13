@@ -47,15 +47,6 @@ jobs:
             exit 0
           fi
 
-          case "${{ matrix.build }}" in
-            manylinux_)
-              echo CIBW_SKIP="*-musllinux_loongarch64" >> $GITHUB_ENV
-              ;;
-            musllinux_)
-              echo CIBW_SKIP="*-manylinux_loongarch64" >> $GITHUB_ENV
-              ;;
-          esac
-
           full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
           if [ -z "$download_url" ]; then
@@ -79,7 +70,7 @@ jobs:
         uses: loong64/cibuildwheel@v3.1.3
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          # CIBW_BUILD: "cp39-${{ matrix.build }}*"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel
