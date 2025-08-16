@@ -1,0 +1,102 @@
+name: build (av)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  schedule:
+    - cron: '0 17 * * *'
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            arch: "loongarch64"
+            build: "manylinux_"
+          - os: ubuntu-24.04
+            arch: "loongarch64"
+            build: "musllinux_"
+
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=av
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+
+          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          echo "VERSION=v${version}" >> $GITHUB_ENV
+
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: PyAV-Org/PyAV
+          ref: ${{ env.VERSION }}
+
+      - name: Setup QEMU
+        if: env.BUILD != 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Prepare build
+        if: env.BUILD != 'false'
+        run: |
+          sed -i 's@github.com/PyAV-Org/@github.com/loong64/@g' scripts/ffmpeg-*.json
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        uses: loong64/cibuildwheel@v3.1.3
+        env:
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_BUILD: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-7.1.json /tmp/vendor
+          # CIBW_BEFORE_BUILD_MACOS: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-7.1.json /tmp/vendor
+          # CIBW_BEFORE_BUILD_WINDOWS: python scripts\fetch-vendor.py --config-file scripts\ffmpeg-7.1.json C:\cibw\vendor
+          CIBW_ENVIRONMENT_LINUX: LD_LIBRARY_PATH=/tmp/vendor/lib:$LD_LIBRARY_PATH PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig
+          # CIBW_ENVIRONMENT_MACOS: PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig LDFLAGS=-headerpad_max_install_names
+          # CIBW_ENVIRONMENT_WINDOWS: INCLUDE=C:\\cibw\\vendor\\include LIB=C:\\cibw\\vendor\\lib PYAV_SKIP_TESTS=unicode_filename
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          # CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: delvewheel repair --add-path C:\cibw\vendor\bin -w {dest_dir} {wheel}
+          # CIBW_SKIP: "pp*"
+          # CIBW_TEST_COMMAND: mv {project}/av {project}/av.disabled && python -m pytest {package}/tests && mv {project}/av.disabled {project}/av
+          # CIBW_TEST_REQUIRES: pytest numpy
+
+      - name: Check wheel
+        run: |
+          ls -al wheelhouse/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
