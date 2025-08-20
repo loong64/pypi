@@ -72,13 +72,6 @@ jobs:
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Cache
-        uses: actions/cache@v4
-        with:
-          path: .buildx-cache-${{ matrix.policy }}_${{ matrix.platform }}/*
-          key: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}-${{ env.COMMIT_SHA }}
-          restore-keys: buildx-cache-${{ matrix.policy }}-${{ matrix.platform }}-
-
       - name: Build
         run: ./build.sh
 
