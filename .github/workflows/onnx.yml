@@ -52,6 +52,12 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
+          if [ ! -f "workflow_scripts/protobuf/build_protobuf_unix.sh" ]; then
+            mkdir -p workflow_scripts/protobuf
+            wget -qO workflow_scripts/protobuf/build_protobuf_unix.sh https://github.com/onnx/onnx/raw/refs/tags/v${version}/workflow_scripts/protobuf/build_protobuf_unix.sh
+            chmod +x workflow_scripts/protobuf/build_protobuf_unix.sh
+          fi
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
@@ -62,8 +68,13 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
-          # CIBW_BEFORE_ALL_LINUX: >
-          #   (command -v yum && yum autoremove -y gcc-toolset-14-binutils gcc-toolset-14-gcc gcc-toolset-14-gcc-c++ gcc-toolset-14-gcc-gfortran gcc-toolset-14-libatomic-devel && dnf install -y binutils gcc gcc-c++ gcc-gfortran libatomic-static protobuf-devel protobuf-compiler) || true
+          CIBW_BEFORE_ALL_LINUX: >
+            (command -v yum && yum install -y wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true &&
+            (command -v apk && apk add --no-cache wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true
+          CIBW_ENVIRONMENT_LINUX: >
+            ONNX_ML=1
+            CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+            LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib'
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel
