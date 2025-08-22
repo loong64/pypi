@@ -25,7 +25,7 @@ jobs:
       matrix:
         package: [psycopg2, psycopg2-binary]
         platform: [manylinux]
-        arch: [x86_64, aarch64, ppc64le, s390x, loongarch64]
+        arch: [loongarch64]
 
     steps:
       - name: Get Source Code

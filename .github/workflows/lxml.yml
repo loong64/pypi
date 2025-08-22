@@ -18,15 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         os: [ 'ubuntu-24.04' ]
-        arch: [ 'x86_64', 'loongarch64', 'ppc64le', 's390x' ]
+        arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
-        include:
-          - os: ubuntu-24.04-arm
-            arch: "aarch64"
-            build: "manylinux_"
-          - os: ubuntu-24.04-arm
-            arch: "aarch64"
-            build: "musllinux_"
 
     steps:
       - name: Get Source Code
