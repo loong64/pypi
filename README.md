@@ -26,6 +26,7 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | -------------------- | ----------------------------------------------------------------------------- |
 | aiohttp              | `pip install aiohttp -i https://mirrors.loong64.com/pypi/simple`              |
 | argon2-cffi-bindings | `pip install argon2-cffi-bindings -i https://mirrors.loong64.com/pypi/simple` |
+| av                   | `pip install av -i https://mirrors.loong64.com/pypi/simple`                   |
 | bcrypt               | `pip install bcrypt -i https://mirrors.loong64.com/pypi/simple`               |
 | Bottleneck           | `pip install Bottleneck -i https://mirrors.loong64.com/pypi/simple`           |
 | cffi                 | `pip install cffi -i https://mirrors.loong64.com/pypi/simple`                 |
@@ -81,6 +82,7 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | psutil               | `pip install psutil -i https://mirrors.loong64.com/pypi/simple`               |
 | psycopg-binary       | `pip install psycopg-binary -i https://mirrors.loong64.com/pypi/simple`       |
 | psycopg2-binary      | `pip install psycopg2-binary -i https://mirrors.loong64.com/pypi/simple`      |
+| pyarrow              | `pip install pyarrow -i https://mirrors.loong64.com/pypi/simple`              |
 | pycryptodome         | `pip install pycryptodome -i https://mirrors.loong64.com/pypi/simple`         |
 | pycryptodomex        | `pip install pycryptodomex -i https://mirrors.loong64.com/pypi/simple`        |
 | pydantic-core        | `pip install pydantic-core -i https://mirrors.loong64.com/pypi/simple`        |
@@ -108,6 +110,7 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | uuid-utils           | `pip install uuid-utils -i https://mirrors.loong64.com/pypi/simple`           |
 | uv                   | `pip install uv -i https://mirrors.loong64.com/pypi/simple`                   |
 | uvloop               | `pip install uvloop -i https://mirrors.loong64.com/pypi/simple`               |
+| wandb                | `pip install wandb -i https://mirrors.loong64.com/pypi/simple`                |
 | watchfiles           | `pip install watchfiles -i https://mirrors.loong64.com/pypi/simple`           |
 | zope.interface       | `pip install zope.interface -i https://mirrors.loong64.com/pypi/simple`       |
 | zstandard            | `pip install zstandard -i https://mirrors.loong64.com/pypi/simple`            |
