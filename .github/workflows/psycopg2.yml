@@ -24,7 +24,7 @@ jobs:
       fail-fast: false
       matrix:
         package: [psycopg2, psycopg2-binary]
-        platform: [manylinux]
+        platform: [manylinux, musllinux]
         arch: [loongarch64]
 
     steps:
@@ -56,14 +56,22 @@ jobs:
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
-          wget -O - "$download_url" | tar xz --strip-components=1
+          echo "VERSION=${version}" >> $GITHUB_ENV
+        
+      - name: checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: psycopg/psycopg2
+          ref: ${{ env.VERSION }}
 
+      - name: Setup QEMU
+        if: env.BUILD != 'false'
+        uses: docker/setup-qemu-action@v3
+
+      - name: Prepare build
+        if: env.BUILD != 'false'
+        run: |
           if [ -f "scripts/build/wheel_linux_before_all.sh" ]; then
             if [ "${{ matrix.arch }}" = "loongarch64" ]; then
               sed -i 's@centos@anolis@g' scripts/build/wheel_linux_before_all.sh
@@ -78,10 +86,6 @@ jobs:
             sed -i 's@pam-devel@pam-devel libicu-devel openldap-devel openssl-devel@g' scripts/build/build_libpq.sh
           fi
 
-      - name: Setup QEMU
-        if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
-
       - name: Cache libpq build
         if: env.BUILD != 'false'
         uses: actions/cache@v4
@@ -91,7 +95,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.1.3
+        uses: loong64/cibuildwheel@v2.23.3
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
