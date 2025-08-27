@@ -1,4 +1,4 @@
-name: build (lxml)
+name: build (lxml-legacy)
 
 on:
   workflow_dispatch:
@@ -8,8 +8,6 @@ on:
         description: 'Package version'
         type: string
         required: true
-  schedule:
-    - cron: '0 15 * * *'
 
 jobs:
   manylinux:
@@ -62,12 +60,13 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.1.3
+        uses: loong64/cibuildwheel@v2.23.3
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
 
       - name: Check wheel
         run: |
