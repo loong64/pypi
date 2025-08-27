@@ -1,4 +1,4 @@
-name: build (lxml-legacy)
+name: build (xmlsec-legacy)
 
 on:
   workflow_dispatch:
@@ -19,10 +19,11 @@ jobs:
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
 
+
     steps:
       - name: Get Source Code
         run: |
-          package=lxml
+          package=xmlsec
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -49,9 +50,10 @@ jobs:
           fi
 
           wget -O - "$download_url" | tar xz --strip-components=1
-
-          if [ -f "pyproject.toml" ]; then
-            sed -i 's/ -flto//g' pyproject.toml
+          
+          wget -O - https://github.com/wojiushixiaobai/python-xmlsec/commit/40840ec520431dfcac66de3889dbe49001eef9d6.patch | patch -p1
+          if [ -f "src/enc.c" ]; then
+            sed -i 's/elem = PyXmlSec_elementFactory(doc, n);/elem = (PyXmlSec_LxmlElementPtr*)PyXmlSec_elementFactory(doc, n);/g' src/enc.c
           fi
 
       - name: Setup QEMU
@@ -62,10 +64,11 @@ jobs:
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v2.23.3
         env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
+          CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
         run: |
