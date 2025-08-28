@@ -74,7 +74,7 @@ jobs:
           CIBW_ENVIRONMENT_LINUX: >
             ONNX_ML=1
             CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
-            LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:/usr/local/lib'
+            LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel
