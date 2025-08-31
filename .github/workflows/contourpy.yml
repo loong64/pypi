@@ -18,13 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
-            build: "manylinux_"
-          - os: ubuntu-24.04
-            arch: "loongarch64"
-            build: "musllinux_"
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+        build: [ "manylinux_", "musllinux_" ]
 
 
     steps:
@@ -42,7 +38,8 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
+          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -57,8 +54,8 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's@build = @# build = @g' pyproject.toml
-          sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
+          # sed -i 's@build = @# build = @g' pyproject.toml
+          # sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
 
       - name: Setup QEMU
         if: env.BUILD != 'false'

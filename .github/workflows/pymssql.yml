@@ -54,7 +54,7 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
           sed -i 's@1.4.26@1.4.27@g' pyproject.toml
-          sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
+          # sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -76,7 +76,7 @@ jobs:
             PYMSSQL_FREETDS="./deps"
             LD_LIBRARY_PATH="./deps/lib"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
-          CIBW_SKIP: "pp*"
+          
 
       - name: Check wheel
         run: |

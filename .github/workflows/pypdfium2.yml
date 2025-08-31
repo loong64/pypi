@@ -61,15 +61,6 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_ALL_LINUX: >
-            ln -s /opt/rh/gcc-toolset-14/root/bin/gcc /opt/rh/gcc-toolset-14/root/bin/loongarch64-unknown-linux-gnu-gcc &&
-            ln -s /opt/rh/gcc-toolset-14/root/bin/g++ /opt/rh/gcc-toolset-14/root/bin/loongarch64-unknown-linux-gnu-g++ &&
-            ln -s /opt/rh/gcc-toolset-14/root/bin/readelf /opt/rh/gcc-toolset-14/root/bin/loongarch64-unknown-linux-gnu-readelf &&
-            ln -s /opt/rh/gcc-toolset-14/root/bin/nm /opt/rh/gcc-toolset-14/root/bin/loongarch64-unknown-linux-gnu-nm &&
-            dnf -y install ninja-build freetype-devel lcms2-devel libjpeg-devel openjpeg2-devel libpng-devel zlib-devel libicu-devel libtiff-devel glib2-devel &&
-            curl -L https://github.com/loong64/gn/releases/latest/download/gn-linux-loong64.tar.gz | tar xz -C /usr/local/bin
-          CIBW_BEFORE_BUILD_LINUX: python setupsrc/pypdfium2_setup/build_native.py
-          CIBW_ENVIRONMENT_LINUX: PDFIUM_PLATFORM="sourcebuild"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
 
       - name: Check wheel

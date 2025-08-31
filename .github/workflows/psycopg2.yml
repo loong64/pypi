@@ -112,7 +112,7 @@ jobs:
             LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build
             PATH="$LIBPQ_BUILD_PREFIX/bin:$PATH"
             LD_LIBRARY_PATH="$LIBPQ_BUILD_PREFIX/lib:$LIBPQ_BUILD_PREFIX/lib64"
-          CIBW_SKIP: "pp*"
+          
 
       - name: Check wheel
         run: |

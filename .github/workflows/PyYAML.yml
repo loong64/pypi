@@ -84,7 +84,7 @@ jobs:
           chmod +x packaging/build/libyaml.sh
 
           sed -i 's@make test-all@# make test-all@' packaging/build/libyaml.sh
-          sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyyaml/pyproject.toml
+          # sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyyaml/pyproject.toml
 
       - name: Check cached libyaml state
         if: env.BUILD != 'false'

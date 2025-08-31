@@ -20,6 +20,7 @@ jobs:
       matrix:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
+        build: [ "manylinux_", "musllinux_" ]
 
 
     steps:
@@ -37,7 +38,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          check_file="${package}-${version}-.*_${{ matrix.arch }}.whl"
+          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
@@ -62,10 +63,10 @@ jobs:
         uses: loong64/cibuildwheel@v3.1.3
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           # CIBW_TEST_COMMAND: python -m unittest discover ephem
           # CIBW_TEST_REQUIRES: tzdata
-          CIBW_SKIP: "pp*"
 
       - name: Check wheel
         run: |

@@ -51,7 +51,7 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
+          # sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -64,7 +64,7 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
-          CIBW_SKIP: "pp*"
+          
 
       - name: Check wheel
         run: |

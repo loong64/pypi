@@ -18,13 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
-            build: "manylinux_"
-          - os: ubuntu-24.04
-            arch: "loongarch64"
-            build: "musllinux_"
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+        build: [ "manylinux_", "musllinux_" ]
 
     steps:
       - name: Get Source Code
@@ -56,7 +52,7 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's@manylinux2010@manylinux_2_28@g' pyproject.toml
+          # sed -i 's@manylinux2010@manylinux_2_28@g' pyproject.toml
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -70,7 +66,7 @@ jobs:
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           # CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
-          CIBW_SKIP: "pp*"
+          
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
