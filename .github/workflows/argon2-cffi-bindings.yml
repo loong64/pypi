@@ -18,10 +18,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - os: ubuntu-24.04
-            arch: "loongarch64"
-            build: [ "manylinux_", "musllinux_" ]
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+        build: [ "manylinux_", "musllinux_" ]
 
 
     steps:
