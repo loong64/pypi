@@ -48,6 +48,7 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | httptools            | `pip install httptools  -i https://mirrors.loong64.com/pypi/simple`           |
 | insightface          | `pip install insightface -i https://mirrors.loong64.com/pypi/simple`          |
 | jiter                | `pip install jiter -i https://mirrors.loong64.com/pypi/simple`                |
+| kornia-rs            | `pip install kornia-rs -i https://mirrors.loong64.com/pypi/simple`            |
 | Levenshtein          | `pip install Levenshtein -i https://mirrors.loong64.com/pypi/simple`          |
 | lxml                 | `pip install lxml -i https://mirrors.loong64.com/pypi/simple`                 |
 | lz4                  | `pip install lz4 -i https://mirrors.loong64.com/pypi/simple`                  |
