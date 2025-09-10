@@ -49,7 +49,7 @@ jobs:
 
           echo "VERSION=v${version}" >> $GITHUB_ENV
       
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v5
         if: env.BUILD != 'false'
         with:
           repository: kornia/kornia-rs

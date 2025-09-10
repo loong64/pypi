@@ -48,7 +48,7 @@ jobs:
 
       - name: Checkout
         if: env.BUILD != 'false'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: gevent/gevent
           ref: ${{ env.VERSION }}
