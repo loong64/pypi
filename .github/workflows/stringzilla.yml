@@ -21,7 +21,8 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
-        package: [ "stringzilla", "stringzillas-cpus" ]
+        # package: [ "stringzilla", "stringzillas-cpus" ]
+        package: [ "stringzilla" ]
 
     steps:
       - name: Get Source Code
