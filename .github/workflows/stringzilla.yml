@@ -21,11 +21,12 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
+        package: [ "stringzilla", "stringzillas-cpus" ]
 
     steps:
       - name: Get Source Code
         run: |
-          package=stringzilla
+          package=${{ matrix.package }}
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -37,6 +38,15 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
+          case $package in
+            stringzilla)
+              check_file="${package}-${version}-.*-${{ matrix.platform }}.*_${{ matrix.arch }}.whl"
+              ;;
+            stringzillas-cpus)
+              check_file="stringzillas_cpus-${version}-.*-${{ matrix.platform }}.*_${{ matrix.arch }}.whl"
+              ;;
+          esac
+
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
@@ -44,15 +54,15 @@ jobs:
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
-          wget -O - "$download_url" | tar xz --strip-components=1
+          echo "VERSION=v${version}" >> $GITHUB_ENV
 
-          # sed -i 's@manylinux2010@manylinux_2_28@g' pyproject.toml
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v4
+        with:
+          repository: ashvardanian/StringZilla
+          ref: ${{ env.VERSION }}
+          submodules: recursive
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -60,12 +70,14 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.1.3
+        uses: loong64/cibuildwheel@v2.23.3
         env:
+          SZ_TARGET: ${{ matrix.package }}
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_ENVIRONMENT_LINUX: SZ_IS_QEMU_=1
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
-          # CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           
           CIBW_TEST_SKIP: "*"
 
