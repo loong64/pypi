@@ -18,8 +18,8 @@ jobs:
       fail-fast: false
       matrix:
         PYTHON:
-          - { VERSION: "cp311", ABI_VERSION: 'py37'}
-          - { VERSION: "cp311", ABI_VERSION: 'py39'}
+          - { VERSION: "cp311", ABI_VERSION: 'py38' }
+          - { VERSION: "cp311", ABI_VERSION: 'py311' }
         MANYLINUX:
           - { NAME: "manylinux_2_38_loongarch64", CONTAINER: "cryptography-manylinux_2_38:loongarch64", RUNNER: "ubuntu-24.04" }
           - { NAME: "musllinux_1_2_loongarch64", CONTAINER: "cryptography-musllinux_1_2:loongarch64", RUNNER: "ubuntu-24.04" }
