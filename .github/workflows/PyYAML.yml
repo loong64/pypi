@@ -51,7 +51,7 @@ jobs:
               check_file="pyyaml-${version}-.*musllinux_1_2_loongarch64.whl"
               echo "CIBW_ARCHS=loongarch64" >> $GITHUB_ENV
               echo "CIBW_BUILD=*-musllinux_loongarch64" >> $GITHUB_ENV
-              echo "DOCKER_IMAGE=ghcr.io/loong64/alpine:3.21" >> $GITHUB_ENV
+              echo "DOCKER_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               ;;
             *)
               echo "BUILD=false" >> $GITHUB_ENV
@@ -106,7 +106,7 @@ jobs:
               DOCKER_CMD="yum install -y perl-Test-Harness && /io/packaging/build/libyaml.sh"
               ;;
             musllinux*)
-              DOCKER_CMD="apk add perl-utils bash git gcc libtool make automake autoconf musl-dev && /io/packaging/build/libyaml.sh"
+              DOCKER_CMD="/io/packaging/build/libyaml.sh"
               ;;
             *)
               exit 1
