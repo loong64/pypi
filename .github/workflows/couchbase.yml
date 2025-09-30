@@ -21,7 +21,6 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
-        python: [ 'cp39', 'cp310', 'cp311', 'cp312', 'cp313' ]
 
 
     steps:
@@ -55,7 +54,7 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's@defined(__mips__) ||@defined(__mips__) || defined(__loongarch64) ||@g' deps/couchbase-cxx-cache/json/4c7c23ac69aa1d72b3a9295ac9aceac10d32d9a1/json/include/tao/json/external/double.hpp
+          sed -i 's@defined(__mips__) ||@defined(__mips__) || defined(__loongarch64) ||@g' deps/couchbase-cxx-cache/json/4c7c/json/include/tao/json/external/double.hpp
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -66,10 +65,10 @@ jobs:
         uses: loong64/cibuildwheel@v3.2.0
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: |
-            (command -v apk && apk add openssl-dev) || true &&
-            (command -v yum && yum -y install openssl-devel) || true
+            (command -v apk && apk add ccache openssl-dev) || true &&
+            (command -v yum && yum -y install ccache openssl-devel) || true
           CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL"
 
       - name: Check wheel
