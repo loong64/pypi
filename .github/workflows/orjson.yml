@@ -27,7 +27,7 @@ jobs:
       fail-fast: false
       matrix:
         python: [
-          { interpreter: 'python3.14', abi: 'cp314-cp314', manylinux: 'manylinux_2_36', publish: true },
+          # { interpreter: 'python3.14', abi: 'cp314-cp314', manylinux: 'manylinux_2_36', publish: true },
           { interpreter: 'python3.13', abi: 'cp313-cp313', manylinux: 'manylinux_2_36', publish: true },
           { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', publish: true },
           { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', publish: true },
