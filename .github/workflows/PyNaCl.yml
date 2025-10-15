@@ -78,7 +78,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.2.0
+        uses: loong64/cibuildwheel@v3.2.1
         env:
           CIBW_BUILD_FRONTEND: "build; args: --config-setting=--build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }}"
           CIBW_ENVIRONMENT_LINUX: >
