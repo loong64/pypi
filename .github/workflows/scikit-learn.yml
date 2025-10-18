@@ -20,7 +20,7 @@ jobs:
       matrix:
         arch: [ 'loongarch64' ]
         build: [ 'manylinux_', 'musllinux_' ]
-        python: [ 'cp310', 'cp311', 'cp312', 'cp313', 'cp314' ]
+        python: [ 'cp310', 'cp311', 'cp312', 'cp313', 'cp313', 'cp313t', 'cp314' ]
 
     steps:
       - name: Get Source Code
@@ -62,6 +62,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           CIBW_TEST_SKIP: "*"
 
