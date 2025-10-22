@@ -13,8 +13,8 @@ on:
 
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
-  LIBPQ_VERSION: "16.0"
-  OPENSSL_VERSION: "1.1.1w"
+  LIBPQ_VERSION: "17.6"
+  OPENSSL_VERSION: "3.5.4"
 
 jobs:
   build_wheels:
@@ -95,7 +95,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v2.23.3
+        uses: loong64/cibuildwheel@v3.2.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
@@ -112,7 +112,8 @@ jobs:
             LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build
             PATH="$LIBPQ_BUILD_PREFIX/bin:$PATH"
             LD_LIBRARY_PATH="$LIBPQ_BUILD_PREFIX/lib:$LIBPQ_BUILD_PREFIX/lib64"
-          
+          CIBW_SKIP: "cp31?t-*" 
+
 
       - name: Check wheel
         run: |

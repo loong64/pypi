@@ -12,8 +12,8 @@ on:
     - cron: '0 15 * * *'
 
 env:
-  LIBPQ_VERSION: "17.5"
-  OPENSSL_VERSION: "3.5.0"
+  LIBPQ_VERSION: "17.6"
+  OPENSSL_VERSION: "3.5.4"
 
 jobs:
   build_wheels:
@@ -113,7 +113,7 @@ jobs:
             LD_LIBRARY_PATH="$LIBPQ_BUILD_PREFIX/lib:$LIBPQ_BUILD_PREFIX/lib64"
             PSYCOPG_TEST_WANT_LIBPQ_BUILD=${{ env.LIBPQ_VERSION }}
             PSYCOPG_TEST_WANT_LIBPQ_IMPORT=${{ env.LIBPQ_VERSION }}
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
+            PYTEST_ADDOPTS="-m 'not slow and not flakey' --color yes"
 
       - name: Check wheel
         run: |
