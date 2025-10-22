@@ -11,11 +11,6 @@ on:
   schedule:
     - cron: '0 17 * * *'
 
-env:
-  COLUMNS: 120
-  UV_PYTHON: 3.12
-  UV_FROZEN: "1"
-
 jobs:
   cross_build_wheels:
     runs-on: ubuntu-latest
@@ -64,9 +59,9 @@ jobs:
 
       - name: set up python
         if: env.BUILD != 'false'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: 3.11
+          python-version: 3.x
 
       - name: Build wheels
         if: env.BUILD != 'false'
@@ -75,6 +70,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release --out dist --manifest-path bindings/python/Cargo.toml
+          sccache: 'true'
 
       - name: Check wheel
         run: |

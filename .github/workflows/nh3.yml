@@ -76,7 +76,7 @@ jobs:
           rust-toolchain: stable
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist -i python3.13
+          args: --release --out dist -i python3.13t
           sccache: true
       
       - name: Check wheel

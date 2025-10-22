@@ -12,9 +12,6 @@ on:
     - cron: '0 17 * * *'
 
 env:
-  COLUMNS: 120
-  UV_PYTHON: 3.12
-  UV_FROZEN: "1"
   RUSTFLAGS: "--cfg uuid_unstable"
 
 jobs:
@@ -65,9 +62,9 @@ jobs:
 
       - name: set up python
         if: env.BUILD != 'false'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
-          python-version: ${{ env.UV_PYTHON }}
+          python-version: "3.12"
 
       - name: Build wheels
         if: env.BUILD != 'false'
@@ -75,7 +72,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13
+          args: --release --out dist -i 3.9 3.10 3.11 3.12 3.13
 
       - name: Check wheel
         run: |

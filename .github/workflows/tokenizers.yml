@@ -59,7 +59,7 @@ jobs:
 
       - name: set up python
         if: env.BUILD != 'false'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: 3.x
 
@@ -70,6 +70,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release --out dist --manifest-path bindings/python/Cargo.toml
+          sccache: 'true'
 
       - name: Check wheel
         run: |

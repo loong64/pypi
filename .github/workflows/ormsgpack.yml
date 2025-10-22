@@ -12,9 +12,8 @@ on:
     - cron: '0 17 * * *'
 
 env:
-  COLUMNS: 120
-  UV_PYTHON: 3.12
-  UV_FROZEN: "1"
+  RUST_TOOLCHAIN: nightly-2025-09-18
+  UV_VERSION: 0.8.24
 
 jobs:
   cross_build_wheels:
@@ -64,7 +63,7 @@ jobs:
 
       - name: set up python
         if: env.BUILD != 'false'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.UV_PYTHON }}
 
@@ -74,7 +73,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13
+          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13 3.14
 
       - name: Check wheel
         run: |
