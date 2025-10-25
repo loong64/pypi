@@ -20,7 +20,7 @@ jobs:
       matrix:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
-        build: [ "manylinux_" ]
+        build: [ "manylinux_", "musllinux_" ]
 
     steps:
       - name: Get Source Code
@@ -70,23 +70,26 @@ jobs:
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v3.2.1
+        with:
+          package-dir: python
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
-            (command -v apk && apk add ccache ninja-build samurai) || true &&
-            (command -v yum && yum -y install ccache ninja-build) || true &&
-            cmake -S cpp -B cpp/build -GNinja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$ARROW_HOME -DARROW_BUILD_STATIC=ON -DARROW_BUILD_SHARED=ON -DARROW_CSV=ON -DARROW_JSON=ON -DARROW_FILESYSTEM=ON -DARROW_COMPUTE=ON &&
-            cmake --build cpp/build --target install'
+            (command -v apk && apk add apache-orc-dev benchmark-dev boost-dev brotli-dev bzip2-dev c-ares-dev ccache curl-dev gflags-dev git glog-dev gmock grpc-dev gtest-dev libxml2-dev llvm-dev lz4-dev musl-locales ninja-build nlohmann-json protobuf-dev rapidjson-dev re2-dev samurai snappy-dev sqlite-dev thrift-dev tzdata utf8proc-dev zstd-dev) || true &&
+            (command -v yum && yum -y install boost-devel brotli-devel bzip2-devel c-ares-devel ccache gflags-devel git gmock-devel google-benchmark-devel gtest-devel libzstd-devel llvm-devel lz4-devel ninja-build protobuf-devel re2-devel snappy-devel thrift-devel utf8proc-devel wget xsimd-devel) || true &&
+            ci/scripts/cpp_build.sh $(pwd) $(pwd)/build
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           CIBW_ENVIRONMENT: >
             ARROW_HOME=/tmp/local
             ARROW_USE_CCACHE=ON
             ARROW_BUILD_TYPE=release
+            ARROW_WITH_MUSL=${{ matrix.build == 'musllinux_' && 'ON' || 'OFF' }}
             CCACHE_DIR=/host/tmp/cache/ccache
-            CMAKE_PREFIX_PATH=$ARROW_HOME:$CMAKE_PREFIX_PATH
-            LD_LIBRARY_PATH=$ARROW_HOME/lib64:$LD_LIBRARY_PATH
+            CMAKE_PREFIX_PATH=/tmp/local
+            LD_LIBRARY_PATH=/tmp/local/lib:${LD_LIBRARY_PATH}
             PYARROW_PARALLEL=4
+          CIBW_ENABLE: cpython-freethreading
 
       - name: Check wheel
         run: |
