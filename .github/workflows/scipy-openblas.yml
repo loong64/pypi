@@ -17,22 +17,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-24.04]
-        PLAT: [loongarch64]
-        INTERFACE64: ['0', '1']
-        MB_ML_VER: ['_2_38']
-        MB_ML_LIBC: ['manylinux']
         include:
-          - os: ubuntu-24.04
-            PLAT: loongarch64
-            INTERFACE64: '1'
-            MB_ML_LIBC: musllinux
-            MB_ML_VER: _1_2
-          - os: ubuntu-24.04
-            PLAT: loongarch64
-            INTERFACE64: '0'
-            MB_ML_LIBC: musllinux
-            MB_ML_VER: _1_2
+          - { os: ubuntu-24.04, PLAT: loongarch64, INTERFACE64: '0', MB_ML_VER: '_2_38', MB_ML_LIBC: manylinux }
+          - { os: ubuntu-24.04, PLAT: loongarch64, INTERFACE64: '1', MB_ML_VER: '_2_38', MB_ML_LIBC: manylinux }
+
+          - { os: ubuntu-24.04, PLAT: loongarch64, INTERFACE64: '0', MB_ML_VER: '_1_2', MB_ML_LIBC: musllinux }
+          - { os: ubuntu-24.04, PLAT: loongarch64, INTERFACE64: '1', MB_ML_VER: '_1_2', MB_ML_LIBC: musllinux }
+
     env:
       NIGHTLY: false
       MB_ML_LIBC: ${{ matrix.MB_ML_LIBC }}
@@ -40,6 +31,7 @@ jobs:
       INTERFACE64: ${{ matrix.INTERFACE64 }}
       BUILD_DIR: ${{ github.workspace }}
       PLAT: ${{ matrix.PLAT }}
+      OS-NAME: ${{ matrix.os }}
 
     steps:
       - name: Get Version
@@ -83,78 +75,33 @@ jobs:
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
       
-      - name: Set up Python
-        if: env.BUILD != 'false'
-        uses: actions/setup-python@v6
-        with:
-          python-version: 3.9
-
-      - name: Install VirtualEnv
-        if: env.BUILD != 'false'
+      - name: Print some Environment variable
         run: |
-          python3 -m pip install --upgrade pip
-          pip install virtualenv
+          echo "PLAT: ${PLAT}".
+          mkdir -p patches
+          wget -qO patches/0001-fix-loongarch64-musllinux-test.patch https://github.com/loong64/openblas-libs/raw/refs/heads/patch_loong64/patches/0001-fix-loongarch64-musllinux-test.patch
 
-      - name: Build OpenBLAS
+      - name: Build and Test wheels
         if: env.BUILD != 'false'
+        uses: loong64/cibuildwheel@v3.1.4
+        env:
+          CIBW_ARCHS: ${{matrix.PLAT}}
+          CIBW_BUILD:  "cp39-${{ matrix.MB_ML_LIBC }}_${{matrix.PLAT}}"
+          CIBW_BUILD_VERBOSITY: 1
+          CIBW_ENVIRONMENT_LINUX: PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple
+
+      - name: Check wheel
         run: |
-          sed -i 's@quay.io/pypa@ghcr.io/loong64@g' tools/build_steps.sh
-          echo -n > OpenBLAS/utest/test_kernel_regress.c
-          if [[ "${{ matrix.MB_ML_LIBC }}" = "musllinux" ]]; then
-            mkdir -p patches
-            wget -qO patches/0001-fix-loongarch64-musllinux-test.patch https://github.com/loong64/openblas-libs/raw/refs/heads/patch_loong64/patches/0001-fix-loongarch64-musllinux-test.patch
-          fi
-          set -xeo pipefail
-          source tools/build_steps.sh
-          echo "------ BEFORE BUILD ---------"
-          before_build
-          if [[ "$NIGHTLY" = "true" ]]; then
-            echo "------ CLEAN CODE --------"
-            clean_code $REPO_DIR develop
-            echo "------ BUILD LIB --------"
-            build_lib "$PLAT" "$INTERFACE64" "1"
-          else
-            echo "------ CLEAN CODE --------"
-            clean_code $REPO_DIR $OPENBLAS_COMMIT
-            echo "------ BUILD LIB --------"
-            build_lib "$PLAT" "$INTERFACE64" "0"
-          fi
-
-      - name: Build and test wheel
-        if: env.BUILD != 'false'
-        run: |
-          if [[ "$NIGHTLY" = "true" ]]; then
-            # Set the pyproject.toml version: convert v0.3.24-30-g138ed79f to 0.3.34.30
-            version=$(cd OpenBLAS && git describe --tags --abbrev=8 | sed -e "s/^v\(.*\)-g.*/\1/" | sed -e "s/-/./g")
-            sed -e "s/^version = .*/version = \"${version}\"/" -i.bak pyproject.toml
-          fi
-          if [ "macos-13" == "${{ matrix.os }}" ]; then
-            source tools/build_wheel.sh
-          else
-            libc=${MB_ML_LIBC:-manylinux}
-            docker_image=ghcr.io/loong64/${libc}${MB_ML_VER}_${PLAT}
-            docker run --rm -e INTERFACE64="${INTERFACE64}" \
-              -e MB_ML_LIBC="${MB_ML_LIBC}" \
-              -v $(pwd):/openblas $docker_image \
-              /bin/bash -xe /openblas/tools/build_wheel.sh
-            sudo chmod -R a+w dist
-          fi
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wheels-${{ matrix.os }}-${{ matrix.PLAT }}-${{ matrix.INTERFACE64 }}-${{ matrix.MB_ML_LIBC }}-${{ matrix.MB_ML_VER }}
-          path: dist/scipy_openblas*.whl
-
-      - uses: actions/upload-artifact@v4
-        with:
-          name: openblas-${{ matrix.os }}-${{ matrix.PLAT }}-${{ matrix.INTERFACE64 }}-${{ matrix.MB_ML_LIBC }}-${{ matrix.MB_ML_VER }}
-          path: libs/openblas*.tar.gz
+          ls -al wheelhouse/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
-        if: env.BUILD != 'false'
+        if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi dist/*.whl
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
         env:
           TWINE_USERNAME: ${{ github.repository_owner }}
           TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
