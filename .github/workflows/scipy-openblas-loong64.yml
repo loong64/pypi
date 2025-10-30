@@ -9,9 +9,6 @@ on:
         type: string
         required: true
 
-env:
-  REPO_DIR: OpenBLAS
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}

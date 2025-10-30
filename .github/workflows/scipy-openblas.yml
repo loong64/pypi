@@ -5,9 +5,6 @@ on:
   schedule:
     - cron: '0 10 * * *'
 
-env:
-  REPO_DIR: OpenBLAS
-
 jobs:
   build:
     runs-on: ${{ matrix.os }}
