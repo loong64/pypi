@@ -63,7 +63,8 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENABLE: cpython-freethreading
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT: SKLEARN_SKIP_NETWORK_TESTS=1
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_OS
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
