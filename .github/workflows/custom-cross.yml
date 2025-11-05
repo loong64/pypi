@@ -18,7 +18,7 @@ on:
       build_args:
         description: 'Package build arguments'
         required: true
-        default: '--release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13'
+        default: '--release --out dist --interpreter 3.10 3.11 3.12 3.13 3.14'
 
 env:
   COLUMNS: 120

@@ -17,7 +17,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: [3.9]
         image:
           - ghcr.io/loong64/manylinux_2_38_loongarch64
           - ghcr.io/loong64/musllinux_1_2_loongarch64
@@ -61,12 +60,6 @@ jobs:
         with:
           repository: python-greenlet/greenlet
           ref: ${{ env.VERSION }}
-
-      - name: Set up Python ${{ matrix.python-version }}
-        if: env.BUILD != 'false'
-        uses: actions/setup-python@v6
-        with:
-          python-version: ${{ matrix.python-version }}
 
       - name: Setup QEMU
         if: env.BUILD != 'false'

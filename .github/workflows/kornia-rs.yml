@@ -67,7 +67,7 @@ jobs:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           command: build
-          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13 3.13t -m kornia-py/Cargo.toml
+          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13 3.13t 3.14 3.14t -m kornia-py/Cargo.toml
 
       - name: Check wheel
         run: |
