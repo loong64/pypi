@@ -65,7 +65,11 @@ jobs:
       - name: Patch setup.py
         if: env.BUILD != 'false'
         run: |
-          git apply --directory="${PACKAGE_DIR}" normalize-package-name.patch
+          git apply ../../normalize-package-name.patch
+          if [ "${VERSION}" = "v1.2.0" ]; then
+            wget -qO - https://github.com/google/brotli/commit/e230f474b87134e8c6c85b630084c612057f253e.patch | git apply
+          fi
+        working-directory: ${{ env.PACKAGE_DIR }}
 
       - name: Build wheels
         if: env.BUILD != 'false'
