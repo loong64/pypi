@@ -1,4 +1,4 @@
-name: build (Brotli)
+name: build (brotli)
 
 on:
   workflow_dispatch:
@@ -10,6 +10,10 @@ on:
         required: true
   schedule:
     - cron: '0 17 * * *'
+
+env:
+  PROJECT_NAME: brotli
+  PACKAGE_DIR: src/brotli
 
 jobs:
   build_wheels:
@@ -25,7 +29,7 @@ jobs:
     steps:
       - name: Get Source Code
         run: |
-          package=Brotli
+          package=brotli
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
           else
@@ -37,32 +41,42 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          check_file="brotli-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
-          wget -O - "$download_url" | tar xz --strip-components=1
+          echo "VERSION=v${version}" >> $GITHUB_ENV
+
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v5
+        with:
+          repository: google/brotli-wheels
+          ref: ${{ env.VERSION }}
+          submodules: true
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
 
+      - name: Patch setup.py
+        if: env.BUILD != 'false'
+        run: |
+          git apply --directory="${PACKAGE_DIR}" normalize-package-name.patch
+
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v3.2.1
+        with:
+          package-dir: ${{ env.PACKAGE_DIR }}
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
         run: |
