@@ -10,17 +10,28 @@ on:
         required: true
   schedule:
     - cron: '0 17 * * *'
+env:
+  PACKAGE_NAME: ruff
+  MODULE_NAME: ruff
+  PYTHON_VERSION: "3.13"
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  CARGO_TERM_COLOR: always
+  RUSTUP_MAX_RETRIES: 10
 
 jobs:
-  build_wheels:
-    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  linux-cross:
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-24.04' ]
-        arch: [ 'loongarch64' ]
-        build: [ "manylinux_", "musllinux_" ]
+        platform:
+          - target: loongarch64-unknown-linux-gnu
+            arch: loongarch64
+            manylinux: 'manylinux_2_36'
+          - target: loongarch64-unknown-linux-musl
+            arch: loongarch64
+            manylinux: "musllinux_1_2"
 
     steps:
       - name: Get Source Code
@@ -37,47 +48,46 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          check_file="${package}-${version}-.*-${{ matrix.platform.manylinux }}_${{ matrix.platform.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
-          wget -O - "$download_url" | tar xz --strip-components=1
-
-      - name: Setup QEMU
+          echo "VERSION=${version}" >> $GITHUB_ENV
+      
+      - uses: actions/checkout@v5
         if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
+        with:
+          repository: astral-sh/ruff
+          ref: ${{ env.VERSION }}
+          submodules: recursive
+          persist-credentials: false
+
+      - name: "Prep README.md"
+        if: env.BUILD != 'false'
+        run: python scripts/transform_readme.py --target pypi
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.2.1
-        env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_ALL_LINUX: >
-            curl -sSf https://sh.rustup.rs | sh -s -- -y
-          CIBW_ENVIRONMENT_LINUX: >
-            PATH="$HOME/.cargo/bin:$PATH"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+        uses: loong64/maturin-action@main
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          command: build
+          args: --release --out dist
 
       - name: Check wheel
         run: |
-          ls -al wheelhouse/*.whl || exit 0
+          ls -al dist/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in wheelhouse/*.whl; do
+          for file in dist/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:
