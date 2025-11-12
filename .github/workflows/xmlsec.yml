@@ -62,12 +62,12 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v2.23.3
+        uses: loong64/cibuildwheel@v3.1.4
         env:
           CIBW_ARCHS: ${{ matrix.arch }}
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
+          # CIBW_PROJECT_REQUIRES_PYTHON: ">=3.8"
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
