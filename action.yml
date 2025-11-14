@@ -99,8 +99,7 @@ runs:
 
     - name: Setup QEMU
       if: env.BUILD != 'false'
-      shell: bash
-      run: docker run --rm --privileged ghcr.io/loong64/qemu-user-static --reset -p yes
+      uses: docker/setup-qemu-action@v3
 
     - name: Check Custom Build
       if: env.BUILD != 'false'
