@@ -2,6 +2,12 @@ name: build (scipy-openblas)
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
   schedule:
     - cron: '0 10 * * *'
 
@@ -33,30 +39,34 @@ jobs:
     steps:
       - name: Get Version
         run: |
-          app_version=$(curl -s "https://api.github.com/repos/MacPython/openblas-libs/releases/latest" | jq -r ".tag_name")
-          if [ -z "${app_version}" ] || [ "${app_version}" == "null" ]; then
-            echo "Failed to get the latest version"
-            exit 1
-          fi
-
           case ${{ matrix.INTERFACE64 }} in
-            0) pkg="scipy-openblas32" ;;
-            1) pkg="scipy-openblas64" ;;
+            0) package="scipy-openblas32" ;;
+            1) package="scipy-openblas64" ;;
           esac
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${pkg}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${app_version/v/}-.*-${{ matrix.MB_ML_LIBC }}_.*_${{ matrix.PLAT }}.whl"; then
-            echo "Package ${pkg} ${app_version/v/} already exists"
+          check_file="${package/-/_}-${version/v/}-.*-${{ matrix.MB_ML_LIBC }}_.*_${{ matrix.PLAT }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
           fi
 
-          openblas_version=$(echo ${app_version} | awk -F. '{print $1"."$2"."$3}')
-          echo "APP_VERSION=${app_version}" >> $GITHUB_ENV
+          openblas_version=$(echo ${version} | awk -F. '{print $1"."$2"."$3}')
+          echo "APP_VERSION=${version}" >> $GITHUB_ENV
           echo "OPENBLAS_COMMIT=${openblas_version}" >> $GITHUB_ENV
 
           echo ""
           echo "========== Build Args =========="
-          echo "APP_VERSION=${app_version}"
+          echo "APP_VERSION=${version}"
           echo "OPENBLAS_COMMIT=${openblas_version}"
 
       - name: Checkout Code
