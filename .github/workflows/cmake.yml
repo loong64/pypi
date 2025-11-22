@@ -53,11 +53,7 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's/musllinux_1_1/musllinux_1_2/g' pyproject.toml
-          sed -i 's/"\*linux_s390x"/"\*linux_s390x", "\*linux_loongarch64"/g' pyproject.toml
-          sed -i 's/"\*-manylinux_s390x"/"\*-manylinux_s390x", "\*-manylinux_loongarch64"/g' pyproject.toml
-          sed -i 's/"\*-musllinux_s390x"/"\*-musllinux_s390x", "\*-musllinux_loongarch64"/g' pyproject.toml
-          sed -i 's/"cmake.define.RUN_CMAKE_TEST" = "ON"/"cmake.define.RUN_CMAKE_TEST" = "OFF"/g' pyproject.toml
+          wget -O - https://github.com/loong64/cmake-python-distributions/commit/372fc4274213853ef6081d1fb4c763de0727f9a7.patch | patch -p1
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -69,7 +65,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
         run: |
