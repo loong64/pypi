@@ -52,9 +52,8 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's@yum install wget@yum install ccache perl-core wget@g' build.sh
-          echo "USE_CCACHE=1" >> $GITHUB_ENV
-          echo "CCACHE_DIR=/host/tmp/cache/ccache" >> $GITHUB_ENV
+          sed -i 's@apk add wget@apk add wget@g' build.sh
+          sed -i 's@yum install wget@yum install perl-core wget@g' build.sh
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -66,7 +65,8 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL USE_CCACHE CCACHE_DIR
+          CIBW_ENABLE: cpython-freethreading
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
