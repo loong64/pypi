@@ -53,7 +53,7 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          wget -O - https://github.com/loong64/cmake-python-distributions/commit/372fc4274213853ef6081d1fb4c763de0727f9a7.patch | patch -p1
+          wget -O - https://github.com/loong64/cmake-python-distributions/commit/75e41080574a82f5f67f4d0f0e91af1203c2ae27.patch | patch -p1
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
