@@ -66,7 +66,7 @@ jobs:
             (command -v apk && apk add shadow postgresql postgresql-dev postgresql-contrib krb5 krb5-server krb5-dev) || true &&
             (command -v yum && yum -y install postgresql-server postgresql-devel postgresql-contrib krb5-server krb5-workstation krb5-libs krb5-devel) || true &&
             useradd -m -s /bin/bash apgtest
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel

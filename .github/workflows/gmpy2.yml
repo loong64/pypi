@@ -78,7 +78,7 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL: bash scripts/cibw_before_all.sh
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_REPAIR_WHEEL_COMMAND: >
             bash scripts/cibw_repair_wheel_command.sh {dest_dir} {wheel}
 

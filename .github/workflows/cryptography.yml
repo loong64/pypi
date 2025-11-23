@@ -88,7 +88,7 @@ jobs:
             OPENSSL_DIR="/opt/pyca/cryptography/openssl"
             OPENSSL_STATIC=1
             RUSTUP_HOME="/root/.rustup"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
         run: |

@@ -79,7 +79,7 @@ jobs:
             (command -v apk && apk add apache-orc-dev benchmark-dev boost-dev brotli-dev bzip2-dev c-ares-dev ccache curl-dev gflags-dev git glog-dev gmock grpc-dev gtest-dev libxml2-dev llvm-dev lz4-dev musl-locales ninja-build nlohmann-json protobuf-dev rapidjson-dev re2-dev samurai snappy-dev sqlite-dev thrift-dev tzdata utf8proc-dev zstd-dev) || true &&
             (command -v yum && yum -y install boost-devel brotli-devel bzip2-devel c-ares-devel ccache gflags-devel git gmock-devel google-benchmark-devel gtest-devel libzstd-devel llvm-devel lz4-devel ninja-build protobuf-devel re2-devel snappy-devel thrift-devel utf8proc-devel wget xsimd-devel) || true &&
             ci/scripts/cpp_build.sh $(pwd) $(pwd)/build
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_ENVIRONMENT: >
             ARROW_HOME=/tmp/local
             ARROW_USE_CCACHE=ON

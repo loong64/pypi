@@ -103,7 +103,7 @@ jobs:
           # CIBW_TEST_REQUIRES: ./psycopg[test] ./psycopg_pool
           # CIBW_TEST_COMMAND: >
             # pytest {project}/tests -m 'not slow and not flakey' --color yes
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL LIBPQ_VERSION OPENSSL_VERSION
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH LIBPQ_VERSION OPENSSL_VERSION
           CIBW_ENVIRONMENT: >
             PSYCOPG_IMPL=binary
             PSYCOPG_TEST_DSN='host=172.17.0.1 user=postgres'

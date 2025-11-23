@@ -66,7 +66,7 @@ jobs:
           CIBW_BEFORE_BUILD: 
             rm -rf {package}/build
           CIBW_ENABLE: "cpython-freethreading"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_COMMAND: >
             python {package}/ci/check_version_number.py
           CIBW_TEST_SKIP: "cp314* *-musllinux_loongarch64"

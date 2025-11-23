@@ -106,7 +106,7 @@ jobs:
           # CIBW_TEST_COMMAND: >
             # export PYTHONPATH={project} &&
             # python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL LIBPQ_VERSION OPENSSL_VERSION
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH LIBPQ_VERSION OPENSSL_VERSION
           CIBW_ENVIRONMENT: >
             PACKAGE_NAME=${{ matrix.package }}
             LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build

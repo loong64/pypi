@@ -82,7 +82,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_CONFIG_SETTINGS: "cmake.define.RUN_PATCHELF_TEST=OFF"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
           CIBW_MUSLLINUX_LOONGARCH64_IMAGE: patchelf_build_${{ matrix.arch }}
 

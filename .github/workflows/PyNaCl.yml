@@ -83,7 +83,7 @@ jobs:
           CIBW_BUILD_FRONTEND: "build; args: --config-setting=--build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }}"
           CIBW_ENVIRONMENT_LINUX: >
             LIBSODIUM_MAKE_ARGS="-j4"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
         run: |

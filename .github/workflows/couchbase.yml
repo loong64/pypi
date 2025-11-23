@@ -69,7 +69,7 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: >
             (command -v apk && apk add ccache openssl-dev) || true &&
             (command -v yum && yum -y install ccache openssl-devel) || true
-          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL"
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
         run: |

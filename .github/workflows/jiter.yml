@@ -69,7 +69,7 @@ jobs:
           CIBW_ENABLE: "cpython-freethreading"
           CIBW_ENVIRONMENT_LINUX: >
             PATH="$HOME/.cargo/bin:$PATH"
-          CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL"
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
         run: |

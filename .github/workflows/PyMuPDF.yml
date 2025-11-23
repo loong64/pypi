@@ -66,7 +66,7 @@ jobs:
             (command -v apk && apk add clang-dev) || true &&
             (command -v yum && yum -y install clang-devel) || true
           CIBW_ENVIRONMENT_LINUX: PYMUPDF_SETUP_PY_LIMITED_API=1
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_SKIP: cp314t-*
 
       - name: Check wheel
