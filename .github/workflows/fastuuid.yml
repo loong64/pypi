@@ -56,7 +56,7 @@ jobs:
 
       - name: Checkout
         if: env.BUILD != 'false'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: fastuuid/fastuuid
           ref: ${{ env.VERSION }}

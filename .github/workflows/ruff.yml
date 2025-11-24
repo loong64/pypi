@@ -57,7 +57,7 @@ jobs:
 
           echo "VERSION=${version}" >> $GITHUB_ENV
       
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         if: env.BUILD != 'false'
         with:
           repository: astral-sh/ruff

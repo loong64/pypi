@@ -50,7 +50,7 @@ jobs:
 
       - name: checkout
         if: env.BUILD != 'false'
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           repository: apache/arrow
           ref: ${{ env.VERSION }}
