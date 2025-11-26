@@ -19,7 +19,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ 'ubuntu-24.04' ]
-        arch: [ 'loongarch64' ]
+        arch: [ 'loongarch64', 's390x' ]
         build: [ "manylinux_", "musllinux_" ]
 
     steps:
@@ -35,7 +35,9 @@ jobs:
             version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
           fi
           echo "Building package: ${package} version: ${version}"
-          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          if [ "${{ matrix.arch }}" = "loongarch64" ]; then
+            echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          fi
 
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
