@@ -55,6 +55,9 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
+          cd external/duckdb
+          wget -qO - https://github.com/loong64/duckdb/raw/refs/heads/main/patch_loong64.patch | patch -p1
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
@@ -65,7 +68,17 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash
+          CIBW_BEFORE_BUILD_LINUX: >
+            (command -v apk && apk add ccache) || true &&
+            (command -v yum && yum -y install ccache) || true
+          CIBW_ENVIRONMENT_LINUX: >
+            CC="/opt/clang/bin/clang"
+            CXX="/opt/clang/bin/clang++"
+            LDFLAGS="-fuse-ld=lld"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
         run: |
