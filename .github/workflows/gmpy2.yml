@@ -81,6 +81,7 @@ jobs:
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_REPAIR_WHEEL_COMMAND: >
             bash scripts/cibw_repair_wheel_command.sh {dest_dir} {wheel}
+          CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
         run: |
