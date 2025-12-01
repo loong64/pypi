@@ -12,8 +12,9 @@ on:
     - cron: '0 15 * * *'
 
 env:
-  LIBPQ_VERSION: "17.6"
+  LIBPQ_VERSION: "18.0"
   OPENSSL_VERSION: "3.5.4"
+  PQ_FLAGS: "-gssencmode-disable"
 
 jobs:
   build_wheels:
@@ -63,30 +64,27 @@ jobs:
       - name: Prepare build
         if: env.BUILD != 'false'
         run: |
-          if [ -f "tools/build/wheel_linux_before_all.sh" ]; then
+          if [ -f "tools/ci/wheel_linux_before_all.sh" ]; then
             if [ "${{ matrix.arch }}" = "loongarch64" ]; then
-              sed -i 's@centos@anolis@g' tools/build/wheel_linux_before_all.sh
+              sed -i 's@centos@anolis@g' tools/ci/wheel_linux_before_all.sh
             fi
           fi
-          if [ -f "tools/build/build_libpq.sh" ]; then
+          if [ -f "tools/ci/build_libpq.sh" ]; then
             if [ "${{ matrix.arch }}" = "loongarch64" ]; then
-              sed -i 's@centos)@anolis)@g' tools/build/build_libpq.sh tools/build/print_so_versions.sh
-              sed -i 's@pam-devel@perl-lib perl-FindBin pam-devel@g' tools/build/build_libpq.sh
+              sed -i 's@centos@anolis@g' tools/ci/build_libpq.sh tools/ci/print_so_versions.sh
             fi
-            sed -i 's@linux-pam-dev@linux-pam-dev icu-dev perl-utils@g' tools/build/build_libpq.sh
-            sed -i 's@pam-devel@pam-devel libicu-devel openldap-devel openssl-devel@g' tools/build/build_libpq.sh
+            sed -i 's@zlib -fPIC shared@zlib -fPIC shared enable-md2@g' tools/ci/build_libpq.sh
           fi
 
       - name: Cache libpq build
-        if: env.BUILD != 'false'
         uses: actions/cache@v4
         with:
           path: /tmp/libpq.build
-          key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}
+          key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Create the binary package source tree
         if: env.BUILD != 'false'
-        run: python3 ./tools/build/copy_to_binary.py
+        run: python3 ./tools/ci/copy_to_binary.py
 
       - name: Build wheels
         if: env.BUILD != 'false'
@@ -96,15 +94,15 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
-          CIBW_BEFORE_ALL_LINUX: ./tools/build/wheel_linux_before_all.sh
+          CIBW_BEFORE_ALL_LINUX: ./tools/ci/wheel_linux_before_all.sh
           CIBW_REPAIR_WHEEL_COMMAND: 
-            ./tools/build/strip_wheel.sh {wheel}
+            ./tools/ci/strip_wheel.sh {wheel}
             && auditwheel repair -w {dest_dir} {wheel}
           # CIBW_TEST_REQUIRES: ./psycopg[test] ./psycopg_pool
           # CIBW_TEST_COMMAND: >
             # pytest {project}/tests -m 'not slow and not flakey' --color yes
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH LIBPQ_VERSION OPENSSL_VERSION
-          CIBW_ENVIRONMENT: >
+          CIBW_ENVIRONMENT: >-
             PSYCOPG_IMPL=binary
             PSYCOPG_TEST_DSN='host=172.17.0.1 user=postgres'
             PGPASSWORD=password
@@ -114,6 +112,7 @@ jobs:
             PSYCOPG_TEST_WANT_LIBPQ_BUILD=${{ env.LIBPQ_VERSION }}
             PSYCOPG_TEST_WANT_LIBPQ_IMPORT=${{ env.LIBPQ_VERSION }}
             PYTEST_ADDOPTS="-m 'not slow and not flakey' --color yes"
+          CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
         run: |
