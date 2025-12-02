@@ -21,7 +21,6 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
-        python: [ 'cp39', 'cp310', 'cp311', 'cp312', 'cp313', 'cp313t', 'cp314' ]
 
     steps:
       - name: Get Source Code
@@ -67,7 +66,7 @@ jobs:
         uses: loong64/cibuildwheel@v3.2.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
             (command -v yum && yum install -y wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true &&
             (command -v apk && apk add --no-cache wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true
