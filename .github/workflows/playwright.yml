@@ -63,6 +63,7 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           wget -qO - https://github.com/loong64/playwright/raw/refs/heads/main/loong64.patch | git apply
+          sed -i "s/^driver_version = .*/driver_version = \"${APP_VERSION}\"/g" setup.py
           rm -rf .git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
