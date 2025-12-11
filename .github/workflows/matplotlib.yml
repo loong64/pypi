@@ -69,7 +69,7 @@ jobs:
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_COMMAND: >
             python {package}/ci/check_version_number.py
-          CIBW_TEST_SKIP: "cp314* *-musllinux_loongarch64"
+          CIBW_TEST_SKIP: "cp31?t-* *-musllinux_loongarch64"
 
       - name: Check wheel
         run: |
