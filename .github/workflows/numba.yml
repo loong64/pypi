@@ -25,7 +25,7 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_" ]
-        python-version: [ 'cp310', 'cp311', 'cp312', 'cp313' ]
+        python-version: [ 'cp310', 'cp311', 'cp312', 'cp313', 'cp314' ]
 
     steps:
       - name: Get Source Code
