@@ -13,14 +13,15 @@ on:
 
 jobs:
   build_wheels:
-    runs-on: ubuntu-24.04
+    name: Build ${{ matrix.arch }} wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        image:
-          - manylinux_2_38_loongarch64
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+        build: [ "manylinux_" ]
 
-    name: ${{ matrix.image }}
     steps:
       - name: Get Source Code
         run: |
@@ -51,30 +52,33 @@ jobs:
         with:
           repository: googleapis/python-crc32c
           ref: ${{ env.VERSION }}
+          submodules: 'recursive'
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v3
 
-      - name: Build and test
+      - name: Build wheels
         if: env.BUILD != 'false'
+        uses: loong64/cibuildwheel@v3.2.1
         env:
-          DOCKER_IMAGE: ghcr.io/loong64/${{ matrix.image }}
-        run: |
-          mkdir wheelhouse
-          git submodule update --init --recursive
-          sed -i 's@BUILD_SHARED_LIBS=yes @BUILD_SHARED_LIBS=yes -DCMAKE_POLICY_VERSION_MINIMUM=3.5 -DCMAKE_INSTALL_PREFIX:PATH=/usr @g' scripts/manylinux/build_on_centos.sh
-          for pyver in 3.9 3.10 3.11 3.12 3.13; do
-            docker run --rm \
-              --platform linux/loong64 \
-              --env BUILD_PYTHON=${pyver} \
-              --env PIP_EXTRA_INDEX_URL="https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" \
-              --volume $(pwd):/var/code/python-crc32c/ \
-              --interactive \
-            $DOCKER_IMAGE /var/code/python-crc32c/scripts/manylinux/build_on_centos.sh
-            sudo rm -f wheels/*-linux_loongarch64.whl
-            sudo mv wheels/*.whl wheelhouse/
-          done
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            yum install -y openssl-devel && 
+            cmake -S google_crc32c -B build \
+              -DCMAKE_BUILD_TYPE=Release \
+              -DCRC32C_BUILD_TESTS=no \
+              -DCRC32C_BUILD_BENCHMARKS=no \
+              -DBUILD_SHARED_LIBS=yes \
+              -DCMAKE_POLICY_VERSION_MINIMUM=3.12 \
+              -DCMAKE_INSTALL_PREFIX:PATH=$(pwd)/usr && 
+            make -C build all install
+          CIBW_ENVIRONMENT_LINUX: >
+            CRC32C_PURE_PYTHON="0"
+            CRC32C_INSTALL_PREFIX="$(pwd)/usr"
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
         run: |
