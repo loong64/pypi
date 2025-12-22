@@ -1,4 +1,4 @@
-name: build (pypdfium2)
+name: sync (pypdfium2)
 
 on:
   workflow_dispatch:
@@ -13,17 +13,17 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
+    name: Sync ${{ matrix.package }} on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        package: [ 'pypdfium2' ]
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
-        build: [ "manylinux_", "musllinux_" ]
 
     steps:
-      - name: Get Source Code
+      - name: Check Version
         run: |
           package=pypdfium2
           if [ "${{ github.event_name }}" = "schedule" ]; then
@@ -45,24 +45,13 @@ jobs:
 
           echo "VERSION=${version}" >> $GITHUB_ENV
 
-      - name: Checkout
+      - name: Sync upstream
         if: env.BUILD != 'false'
-        uses: actions/checkout@v6
-        with:
-          repository: pypdfium2-team/pypdfium2
-          ref: ${{ env.VERSION }}
-
-      - name: Setup QEMU
-        if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
-
-      - name: Build wheels
-        if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.2.1
+        run: |
+          UP_REPO="pypdfium2-team/pypdfium2"
+          gh release download ${VERSION} -R ${UP_REPO} --pattern '*_loongarch64.whl' --dir wheelhouse/
         env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check wheel
         run: |
