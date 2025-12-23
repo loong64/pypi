@@ -61,13 +61,13 @@ jobs:
           fi
 
           openblas_version=$(echo ${version} | awk -F. '{print $1"."$2"."$3}')
-          echo "APP_VERSION=${version}" >> $GITHUB_ENV
+          echo "APP_VERSION=v${version}" >> $GITHUB_ENV
           echo "OPENBLAS_COMMIT=${openblas_version}" >> $GITHUB_ENV
 
           echo ""
           echo "========== Build Args =========="
-          echo "APP_VERSION=${version}"
-          echo "OPENBLAS_COMMIT=${openblas_version}"
+          echo "APP_VERSION=${APP_VERSION}"
+          echo "OPENBLAS_COMMIT=${OPENBLAS_COMMIT}"
 
       - name: Checkout Code
         if: env.BUILD != 'false'
@@ -90,7 +90,7 @@ jobs:
 
       - name: Build and Test wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.1.4
+        uses: loong64/cibuildwheel@v3.3.0
         env:
           CIBW_ARCHS: ${{matrix.PLAT}}
           CIBW_BUILD:  "cp39-${{ matrix.MB_ML_LIBC }}_${{matrix.PLAT}}"
