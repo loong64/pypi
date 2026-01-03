@@ -72,10 +72,11 @@ jobs:
         run: |
           set -ex
           if [ "${{ matrix.arch }}" = "loongarch64" ]; then
+            wget -qO - https://github.com/loong64/Pillow/commit/54044c2683c72e252df33c69079083749b20aecc.patch | git apply
+            cd wheels/multibuild
             wget -qO - https://github.com/loong64/multibuild/commit/cb4e803b66ccc6b31243be97463e1afd49e8dadb.patch | git apply
             git diff
           fi
-        working-directory: wheels/multibuild
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
