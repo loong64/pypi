@@ -1,0 +1,99 @@
+name: build (ziglang)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  schedule:
+    - cron: '0 15 * * *'
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.arch }} wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=ziglang
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+
+          # if [ ${{ matrix.arch }} = "loongarch64" ]; then
+            # echo "CIBW_BEFORE_ALL_LINUX=(command -v apk && apk add tiff-dev jpeg-dev openjpeg-dev zlib-dev freetype-dev lcms2-dev libwebp-dev tcl-dev tk-dev harfbuzz-dev fribidi-dev libimagequant-dev libxcb-dev libpng-dev) && (command -v yum && yum install -y libtiff-devel libjpeg-devel openjpeg2-devel zlib-devel freetype-devel lcms2-devel libwebp-devel tcl-devel tk-devel harfbuzz-devel fribidi-devel libraqm-devel libimagequant-devel libxcb-devel)" >> $GITHUB_ENV
+          # fi
+
+          check_file="${package}-${version}-.*loongarch64.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          # full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          # download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          # if [ -z "$download_url" ] || [ ${{ matrix.arch }} != "loongarch64" ]; then
+              # echo "No source found for package ${package} version ${version}"
+              echo "SOURCE=false" >> $GITHUB_ENV
+              echo "GITHUB_EVENT_INPUTS_VERSION=${version}" >> $GITHUB_ENV
+              echo "platform=${{ matrix.arch }}-linux" >> $GITHUB_ENV
+              # exit 0
+          # fi
+          # wget -O - "$download_url" | tar xz --strip-components=1
+
+      - name: Checkout
+        if: env.SOURCE == 'false'
+        uses: actions/checkout@v6
+        with:
+          repository: ziglang/zig-pypi
+
+      - name: Patch build
+        if: env.BUILD != 'false'
+        run: |
+          set -ex
+          if [ "${{ matrix.arch }}" = "loongarch64" ]; then
+            wget -qO - https://github.com/loong64/zig-pypi/commit/f50378b842c92b974f6fd40ffa1475dc3c7ffa0c.patch | git apply
+            git diff
+          fi
+
+      - name: Setup UV
+        if: env.BUILD != 'false'
+        uses: astral-sh/setup-uv@v7
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        run: |
+          uv run make_wheels.py --outdir dist/ --version ${GITHUB_EVENT_INPUTS_VERSION} --platform $platform
+
+      - name: Check wheel
+        run: |
+          ls -al dist/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in dist/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
