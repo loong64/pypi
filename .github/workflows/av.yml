@@ -60,6 +60,7 @@ jobs:
       - name: Prepare build
         if: env.BUILD != 'false'
         run: |
+          wget -O - https://github.com/loong64/PyAV/commit/1c9721a6a2ced3e5f3159ec325521eace7128cb5.patch | patch -p1
           sed -i 's@github.com/PyAV-Org/@github.com/loong64/@g' scripts/ffmpeg-*.json
 
       - name: Build wheels
@@ -68,9 +69,10 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_BUILD: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-7.1.json /tmp/vendor
-          # CIBW_BEFORE_BUILD_MACOS: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-7.1.json /tmp/vendor
-          # CIBW_BEFORE_BUILD_WINDOWS: python scripts\fetch-vendor.py --config-file scripts\ffmpeg-7.1.json C:\cibw\vendor
+          CIBW_BEFORE_BUILD: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-8.0.json /tmp/vendor
+          # CIBW_BEFORE_BUILD_MACOS: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-8.0.json /tmp/vendor
+          # CIBW_BEFORE_BUILD_WINDOWS: python scripts\fetch-vendor.py --config-file scripts\ffmpeg-8.0.json C:\cibw\vendor
+          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: LD_LIBRARY_PATH=/tmp/vendor/lib:$LD_LIBRARY_PATH PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig
           # CIBW_ENVIRONMENT_MACOS: PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig LDFLAGS=-headerpad_max_install_names
           # CIBW_ENVIRONMENT_WINDOWS: INCLUDE=C:\\cibw\\vendor\\include LIB=C:\\cibw\\vendor\\lib PYAV_SKIP_TESTS=unicode_filename
