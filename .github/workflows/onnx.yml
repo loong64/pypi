@@ -37,7 +37,9 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"; then
+          py_ver=${{ matrix.python-version }}
+          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
@@ -50,6 +52,10 @@ jobs:
               exit 1
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
+
+          if [ ! -f "requirements-release_build.txt" ]; then
+            wget -qO requirements-release_build.txt https://github.com/onnx/onnx/raw/refs/tags/v${version}/requirements-release_build.txt
+          fi
 
           if [ ! -f "workflow_scripts/protobuf/build_protobuf_unix.sh" ]; then
             mkdir -p workflow_scripts/protobuf
@@ -68,10 +74,18 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
+            curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash &&
             (command -v yum && yum install -y wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true &&
             (command -v apk && apk add --no-cache wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true
+          CIBW_BEFORE_BUILD_LINUX: >
+            rm -rf .setuptools-cmake-build &&
+            pip install -r requirements-release_build.txt &&
+            pip install cmake
           CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
+            CC="/opt/clang/bin/clang"
+            CXX="/opt/clang/bin/clang++"
+            LDFLAGS="-fuse-ld=lld"
             ONNX_ML=1
             CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
             LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib"
