@@ -63,7 +63,13 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash
           CIBW_ENABLE: cpython-freethreading
+          CIBW_ENVIRONMENT_LINUX: >
+            CC="/opt/clang/bin/clang"
+            CXX="/opt/clang/bin/clang++"
+            PKG_CONFIG_PATH="/project/"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
 
