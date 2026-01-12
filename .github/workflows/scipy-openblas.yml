@@ -35,7 +35,6 @@ jobs:
       BUILD_DIR: ${{ github.workspace }}
       PLAT: ${{ matrix.PLAT }}
       OS-NAME: ${{ matrix.os }}
-
     steps:
       - name: Get Version
         run: |

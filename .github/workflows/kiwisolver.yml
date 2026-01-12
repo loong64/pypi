@@ -21,8 +21,6 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
-
-
     steps:
       - name: Get Source Code
         run: |

@@ -29,7 +29,6 @@ jobs:
             arch: loongarch64
             manylinux: "musllinux_1_2"
             auditwheel: repair
-
     steps:
       - name: Get Source Code
         run: |

@@ -22,7 +22,6 @@ jobs:
         MANYLINUX:
           - { NAME: "manylinux_2_38_loongarch64", CONTAINER: "manylinux_2_38_loongarch64", RUNNER: "ubuntu-24.04" }
           - { NAME: "musllinux_1_2_loongarch64", CONTAINER: "musllinux_1_2_loongarch64", RUNNER: "ubuntu-24.04" }
-
     steps:
       - name: Get Source Code
         run: |

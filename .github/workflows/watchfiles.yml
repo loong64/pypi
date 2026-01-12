@@ -25,7 +25,6 @@ jobs:
             arch: loongarch64
             manylinux: "musllinux_1_2"
 
-
     steps:
       - name: Get Source Code
         run: |

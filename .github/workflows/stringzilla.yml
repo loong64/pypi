@@ -23,7 +23,6 @@ jobs:
         build: [ "manylinux_", "musllinux_" ]
         # package: [ "stringzilla", "stringzillas-cpus" ]
         package: [ "stringzilla" ]
-
     steps:
       - name: Get Source Code
         run: |

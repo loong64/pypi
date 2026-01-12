@@ -21,7 +21,6 @@ jobs:
         package: [ 'gdb-for-pwndbg', 'lldb-for-pwndbg' ]
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
-
     steps:
       - name: Check Version
         run: |

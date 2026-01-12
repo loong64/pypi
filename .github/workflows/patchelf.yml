@@ -22,7 +22,6 @@ jobs:
           - arch: "loongarch64"
             docker_arch: "loong64"
             test_image: ghcr.io/loong64/manylinux_2_38_loongarch64
-
     steps:
       - name: Get Source Code
         run: |

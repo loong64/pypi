@@ -26,7 +26,6 @@ jobs:
         package: [psycopg2, psycopg2-binary]
         platform: [manylinux, musllinux]
         arch: [loongarch64]
-
     steps:
       - name: Get Source Code
         run: |

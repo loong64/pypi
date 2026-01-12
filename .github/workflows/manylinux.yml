@@ -47,7 +47,6 @@ jobs:
       PLATFORM: ${{ matrix.platform }}
       # COMMIT_SHA: ${{ github.sha }}
       LATEST_IMAGE: ${{ github.event.inputs.latest }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v6

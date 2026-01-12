@@ -21,8 +21,6 @@ jobs:
         arch: [ 'loongarch64' ]
         build: [ 'manylinux_', 'musllinux_' ]
         python: [ 'cp311', 'cp312', 'cp313', 'cp313t', 'cp314', 'cp314t' ]
-
-
     steps:
       - name: Get Source Code
         run: |

@@ -21,7 +21,6 @@ jobs:
         package: [ 'pypdfium2' ]
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
-
     steps:
       - name: Check Version
         run: |
