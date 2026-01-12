@@ -21,8 +21,6 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
-
-
     steps:
       - name: Get Source Code
         run: |
@@ -59,10 +57,19 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.2.1
+        uses: loong64/cibuildwheel@v3.3.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash
+          CIBW_ENABLE: cpython-freethreading
+          CIBW_ENVIRONMENT_LINUX: >
+            CC="/opt/clang/bin/clang"
+            CXX="/opt/clang/bin/clang++"
+            LDFLAGS="-fuse-ld=lld"
+            RUNNER_OS="Linux"
+            PKG_CONFIG_PATH="/project/.openblas"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
 
