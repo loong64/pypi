@@ -83,6 +83,9 @@ jobs:
         env:
           CIBW_BUILD_FRONTEND: "build[uv]"
           CIBW_CONFIG_SETTINGS: "build-args=--features=pyo3/abi3-${{ matrix.PYTHON.ABI_VERSION }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            TARGET_LIB=$(ldd /usr/local/bin/uv 2>&1 | sed -n 's/.*\(libgcc_s-[^ ]*\.so\.1\).*/\1/p') && 
+            [ -n "${TARGET_LIB}" ] && cp -f "/usr/lib/libgcc_s.so.1" "/usr/lib/${TARGET_LIB}"
           CIBW_ENVIRONMENT_LINUX: >
             OPENSSL_DIR="/opt/pyca/cryptography/openssl"
             OPENSSL_STATIC=1
