@@ -32,7 +32,6 @@ jobs:
           { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', publish: true },
           { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', publish: true },
           { interpreter: 'python3.10', abi: 'cp310-cp310', manylinux: 'manylinux_2_36', publish: true },
-          { interpreter: 'python3.9', abi: 'cp39-cp39', manylinux: 'manylinux_2_36', publish: true },
         ]
         target: [
           {
