@@ -8,6 +8,11 @@ on:
         description: 'Package version'
         type: string
         required: true
+      tag:
+        default: 'main'
+        description: 'github branch'
+        type: string
+        required: true
   # schedule:
     # - cron: '0 10 * * *'
 
@@ -60,7 +65,7 @@ jobs:
           fi
 
           openblas_version=$(echo ${version} | awk -F. '{print $1"."$2"."$3}')
-          echo "APP_VERSION=v${version}" >> $GITHUB_ENV
+          echo "APP_VERSION=${{ github.event.inputs.tag }}" >> $GITHUB_ENV
           echo "OPENBLAS_COMMIT=${openblas_version}" >> $GITHUB_ENV
 
           echo ""
