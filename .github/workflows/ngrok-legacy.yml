@@ -8,6 +8,8 @@ on:
         description: 'Package version'
         type: string
         required: true
+  schedule:
+    - cron: '0 17 * * *'
 
 jobs:
   build_wheels:
