@@ -58,7 +58,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.3.0
+        uses: loong64/cibuildwheel@v3.3.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
@@ -69,6 +69,7 @@ jobs:
             CXX="/opt/clang/bin/clang++"
             LDFLAGS="-fuse-ld=lld"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: 'auditwheel repair --strip -w {dest_dir} {wheel}'
 
       - name: Check wheel
