@@ -60,7 +60,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/maturin-action@main
+        uses: PyO3/maturin-action@v1
         with:
           rust-toolchain: stable
           target: ${{ matrix.platform.target }}
@@ -70,7 +70,7 @@ jobs:
 
       - name: Build free-threaded wheels
         if: env.BUILD != 'false'
-        uses: loong64/maturin-action@main
+        uses: PyO3/maturin-action@v1
         with:
           rust-toolchain: stable
           target: ${{ matrix.platform.target }}

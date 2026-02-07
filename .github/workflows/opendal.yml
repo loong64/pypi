@@ -58,7 +58,7 @@ jobs:
 
       - name: Build abi3 wheels
         if: env.BUILD != 'false'
-        uses: loong64/maturin-action@main
+        uses: PyO3/maturin-action@v1
         with:
           working-directory: "bindings/python"
           target: "${{ matrix.platform.target }}"

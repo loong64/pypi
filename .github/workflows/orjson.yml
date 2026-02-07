@@ -81,7 +81,7 @@ jobs:
 
       - name: Build
         if: env.BUILD != 'false'
-        uses: loong64/maturin-action@main
+        uses: PyO3/maturin-action@v1
         env:
           PYO3_CROSS_LIB_DIR: "/opt/python/${{ matrix.python.abi }}"
           CFLAGS: "${{ matrix.target.cflags }}"
