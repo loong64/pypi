@@ -20,6 +20,7 @@ jobs:
         PYTHON:
           - { VERSION: "cp311", ABI_VERSION: 'py38' }
           - { VERSION: "cp311", ABI_VERSION: 'py311' }
+          - { VERSION: "cp314t" }
         MANYLINUX:
           - { NAME: "manylinux_2_38_loongarch64", CONTAINER: "cryptography-manylinux_2_38:loongarch64", RUNNER: "ubuntu-24.04" }
           - { NAME: "musllinux_1_2_loongarch64", CONTAINER: "cryptography-musllinux_1_2:loongarch64", RUNNER: "ubuntu-24.04" }
@@ -59,6 +60,10 @@ jobs:
               ;;
           esac
 
+          if [ -n "${{ matrix.PYTHON.ABI_VERSION }}" ]; then
+              echo "CIBW_CONFIG_SETTINGS=build-args=--features=pyo3/abi3-${{ matrix.PYTHON.ABI_VERSION }}" >> $GITHUB_ENV
+          fi
+
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
@@ -82,10 +87,7 @@ jobs:
         uses: loong64/cibuildwheel@v3.2.1
         env:
           CIBW_BUILD_FRONTEND: "build[uv]"
-          CIBW_CONFIG_SETTINGS: "build-args=--features=pyo3/abi3-${{ matrix.PYTHON.ABI_VERSION }}"
-          # CIBW_BEFORE_ALL_LINUX: >
-            # TARGET_LIB=$(ldd /usr/local/bin/uv 2>&1 | sed -n 's/.*\(libgcc_s-[^ ]*\.so\.1\).*/\1/p') && 
-            # [ -n "${TARGET_LIB}" ] && cp -f "/usr/lib/libgcc_s.so.1" "/usr/lib/${TARGET_LIB}"
+          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
             OPENSSL_DIR="/opt/pyca/cryptography/openssl"
             OPENSSL_STATIC=1
