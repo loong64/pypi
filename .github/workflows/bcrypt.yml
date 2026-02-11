@@ -20,6 +20,8 @@ jobs:
         PYTHON:
           - { VERSION: "cp38", ABI_VERSION: 'cp38' }
           - { VERSION: "cp39", ABI_VERSION: 'cp39' }
+          - { VERSION: "cp313t" }
+          - { VERSION: "cp314t" }
         MANYLINUX:
           - { NAME: "manylinux_2_38_loongarch64", CONTAINER: "cryptography-manylinux_2_38:loongarch64", RUNNER: "ubuntu-24.04" }
           - { NAME: "musllinux_1_2_loongarch64", CONTAINER: "cryptography-musllinux_1_2:loongarch64", RUNNER: "ubuntu-24.04" }
@@ -57,6 +59,10 @@ jobs:
               ;;
           esac
 
+          if [ -n "${{ matrix.PYTHON.ABI_VERSION }}" ]; then
+              echo "CIBW_CONFIG_SETTINGS=build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }}" >> $GITHUB_ENV
+          fi
+
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
@@ -79,7 +85,8 @@ jobs:
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v3.2.1
         env:
-          CIBW_BUILD_FRONTEND: "pip; args: --config-settings=--build-option=--py-limited-api=${{ matrix.PYTHON.ABI_VERSION }}"
+          CIBW_BUILD_FRONTEND: "pip"
+          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
             RUSTUP_HOME="/root/.rustup"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
