@@ -65,7 +65,7 @@ jobs:
 
       - name: install wheel dependencies
         run: |
-          pip3 install wheel
+          pip3 install "wheel<0.42.0"
 
       - name: get llvm-project
         if: env.BUILD != 'false'
