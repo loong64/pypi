@@ -41,7 +41,7 @@ jobs:
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
           fi
-          IMAGE_NAME="ghcr.io/loong64/${{ matrix.platform }}_${{ matrix.arch }}:latest"
+          IMAGE_NAME="ghcr.io/loong64/${{ matrix.platform }}-clang:${{ matrix.arch }}-amd64"
           echo "IMAGE_NAME=${IMAGE_NAME/2_36/2_38}" >> $GITHUB_ENV
 
           echo "LLVM_VER=${version}" >> $GITHUB_ENV
@@ -59,6 +59,14 @@ jobs:
         run: |
           ./.github/free-disk-space.sh || true
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: install wheel dependencies
+        run: |
+          pip3 install wheel
+
       - name: get llvm-project
         if: env.BUILD != 'false'
         run: |
@@ -75,6 +83,7 @@ jobs:
           cd llvm-project-$LLVM_VER
           docker run --platform=linux/loong64 --rm -v `pwd`:/work $IMAGE_NAME \
             sh -c 'export PATH=$PATH:/opt/python/cp39-cp39/bin && \
+                   export LDFLAGS="-fuse-ld=lld -static-libgcc -static-libstdc++" && \
                    mkdir -p /work/build && \
                    cd /work/build && \
                    cmake ../llvm \
@@ -85,7 +94,7 @@ jobs:
                      -DLLVM_ENABLE_TERMINFO=OFF \
                      -DLLVM_TARGETS_TO_BUILD=LoongArch \
                      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-                     -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g -DNDEBUG -static-libgcc -static-libstdc++" && \
+                     -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g -DNDEBUG" && \
                    make libclang -j$(nproc) && \
                    strip lib/libclang.so'
           sudo chmod -R a+wr `pwd`/build
@@ -99,40 +108,12 @@ jobs:
         run: |
           du -csh $(realpath llvm-project-$LLVM_VER/build/lib/libclang.so)
           file $(realpath llvm-project-$LLVM_VER/build/lib/libclang.so)
-          ldd llvm-project-$LLVM_VER/build/lib/libclang.so
-          strings llvm-project-$LLVM_VER/build/lib/libclang.so | grep GLIBC
-          nm --dynamic --undefined-only --with-symbol-versions llvm-project-$LLVM_VER/build/lib/libclang.so
-
-      - name: create and print sha512sum
-        if: env.BUILD != 'false'
-        run: |
-          cd llvm-project-$LLVM_VER/build/lib
-          sha512sum libclang.so > libclang.so.$LLVM_VER.linux-loong64.sha512sum
-          echo "Checksum is: "
-          cat libclang.so.$LLVM_VER.linux-loong64.sha512sum
-          tar zcvfh libclang.so.$LLVM_VER.linux-loong64.tar.gz libclang.so libclang.so.$LLVM_VER.linux-loong64.sha512sum
-          shasum -a512 libclang.so.$LLVM_VER.linux-loong64.tar.gz
-
-      - uses: actions/upload-artifact@v6
-        if: env.BUILD != 'false'
-        with:
-          name: libclang.so.${{env.LLVM_VER}}.linux-loong64.tar.gz
-          path: llvm-project-${{env.LLVM_VER}}/build/lib/libclang.so.${{env.LLVM_VER}}.linux-loong64.tar.gz
 
       - name: generate wheel package
         if: env.BUILD != 'false'
         run: |
           cp llvm-project-$LLVM_VER/build/lib/libclang.so native/
-          docker run --platform=linux/loong64 --rm -v `pwd`:/work -w /work $IMAGE_NAME \
-            sh -c 'export PATH=$PATH:/opt/python/cp310-cp310/bin && \
-                  pip install wheel && \
-                  python3 setup_ext.py bdist_wheel --universal --plat-name=${{ matrix.platform }}_${{ matrix.arch }}
-
-      - uses: actions/upload-artifact@v6
-        if: env.BUILD != 'false'
-        with:
-          name: wheel-${{env.LLVM_VER}}-${{ matrix.platform }}_${{ matrix.arch }}
-          path: dist/*.whl
+          python3 setup_ext.py bdist_wheel --universal --plat-name=${{ matrix.platform }}_${{ matrix.arch }}
 
       - name: Check wheel
         run: |
