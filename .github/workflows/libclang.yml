@@ -1,0 +1,151 @@
+name: build (libclang)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  schedule:
+    - cron: '0 17 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [libclang]
+        platform: [manylinux_2_36, musllinux_1_2]
+        arch: [loongarch64]
+    steps:
+      - name: Get Source Code
+        run: |
+          package=${{ matrix.package }}
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+
+          check_file="${package}-${version}-.*-${{ matrix.platform }}_${{ matrix.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+          IMAGE_NAME="ghcr.io/loong64/${{ matrix.platform }}_${{ matrix.arch }}:latest"
+          echo "IMAGE_NAME=${IMAGE_NAME/2_36/2_38}" >> $GITHUB_ENV
+
+          echo "LLVM_VER=${version}" >> $GITHUB_ENV
+          echo "VERSION=llvm-${version}" >> $GITHUB_ENV
+
+      - name: checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v6
+        with:
+          repository: sighingnow/libclang
+          ref: ${{ env.VERSION }}
+
+      - name: free disk spaces
+        if: env.BUILD != 'false'
+        run: |
+          ./.github/free-disk-space.sh || true
+
+      - name: get llvm-project
+        if: env.BUILD != 'false'
+        run: |
+          wget -q https://github.com/llvm/llvm-project/releases/download/llvmorg-$LLVM_VER/llvm-project-$LLVM_VER.src.tar.xz
+          tar xf llvm-project-$LLVM_VER.src.tar.xz
+          mv llvm-project-$LLVM_VER.src llvm-project-$LLVM_VER
+
+      - uses: docker/setup-qemu-action@v3
+        if: env.BUILD != 'false'
+
+      - name: cmake & build in docker
+        if: env.BUILD != 'false'
+        run: |
+          cd llvm-project-$LLVM_VER
+          docker run --platform=linux/loong64 --rm -v `pwd`:/work $IMAGE_NAME \
+            sh -c 'export PATH=$PATH:/opt/python/cp39-cp39/bin && \
+                   mkdir -p /work/build && \
+                   cd /work/build && \
+                   cmake ../llvm \
+                     -DLLVM_ENABLE_PROJECTS=clang \
+                     -DBUILD_SHARED_LIBS=OFF \
+                     -DLLVM_ENABLE_ZLIB=OFF \
+                     -DLLVM_ENABLE_ZSTD=OFF \
+                     -DLLVM_ENABLE_TERMINFO=OFF \
+                     -DLLVM_TARGETS_TO_BUILD=LoongArch \
+                     -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+                     -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g -DNDEBUG -static-libgcc -static-libstdc++" && \
+                   make libclang -j$(nproc) && \
+                   strip lib/libclang.so'
+          sudo chmod -R a+wr `pwd`/build
+
+      - name: make build directory
+        if: env.BUILD != 'false'
+        run: mkdir -p llvm-project-$LLVM_VER/build
+
+      - name: print dependencies
+        if: env.BUILD != 'false'
+        run: |
+          du -csh $(realpath llvm-project-$LLVM_VER/build/lib/libclang.so)
+          file $(realpath llvm-project-$LLVM_VER/build/lib/libclang.so)
+          ldd llvm-project-$LLVM_VER/build/lib/libclang.so
+          strings llvm-project-$LLVM_VER/build/lib/libclang.so | grep GLIBC
+          nm --dynamic --undefined-only --with-symbol-versions llvm-project-$LLVM_VER/build/lib/libclang.so
+
+      - name: create and print sha512sum
+        if: env.BUILD != 'false'
+        run: |
+          cd llvm-project-$LLVM_VER/build/lib
+          sha512sum libclang.so > libclang.so.$LLVM_VER.linux-loong64.sha512sum
+          echo "Checksum is: "
+          cat libclang.so.$LLVM_VER.linux-loong64.sha512sum
+          tar zcvfh libclang.so.$LLVM_VER.linux-loong64.tar.gz libclang.so libclang.so.$LLVM_VER.linux-loong64.sha512sum
+          shasum -a512 libclang.so.$LLVM_VER.linux-loong64.tar.gz
+
+      - uses: actions/upload-artifact@v6
+        if: env.BUILD != 'false'
+        with:
+          name: libclang.so.${{env.LLVM_VER}}.linux-loong64.tar.gz
+          path: llvm-project-${{env.LLVM_VER}}/build/lib/libclang.so.${{env.LLVM_VER}}.linux-loong64.tar.gz
+
+      - name: generate wheel package
+        if: env.BUILD != 'false'
+        run: |
+          cp llvm-project-$LLVM_VER/build/lib/libclang.so native/
+          docker run --platform=linux/loong64 --rm -v `pwd`:/work -w /work $IMAGE_NAME \
+            sh -c 'export PATH=$PATH:/opt/python/cp310-cp310/bin && \
+                  pip install wheel && \
+                  python3 setup_ext.py bdist_wheel --universal --plat-name=${{ matrix.platform }}_${{ matrix.arch }}
+
+      - uses: actions/upload-artifact@v6
+        if: env.BUILD != 'false'
+        with:
+          name: wheel-${{env.LLVM_VER}}-${{ matrix.platform }}_${{ matrix.arch }}
+          path: dist/*.whl
+
+      - name: Check wheel
+        run: |
+          ls -al dist/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in dist/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
