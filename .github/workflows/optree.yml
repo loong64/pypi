@@ -60,10 +60,11 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.2.1
+        uses: loong64/cibuildwheel@v3.3.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH _GLIBCXX_USE_CXX11_ABI
           CIBW_TEST_SKIP: "*"
 
