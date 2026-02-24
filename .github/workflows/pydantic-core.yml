@@ -46,13 +46,13 @@ jobs:
             exit 0
           fi
 
-          echo "VERSION=v${version}" >> $GITHUB_ENV
-      
-      - uses: actions/checkout@v6
-        if: env.BUILD != 'false'
-        with:
-          repository: pydantic/pydantic-core
-          ref: ${{ env.VERSION }}
+          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          if [ -z "$download_url" ]; then
+              echo "No source found for package ${package} version ${version}"
+              exit 1
+          fi
+          wget -O - "$download_url" | tar xz --strip-components=1
 
       - uses: actions/setup-python@v4
         if: env.BUILD != 'false'
@@ -68,7 +68,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13 3.14
+          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13 3.14 3.14t
           rust-toolchain: stable
           docker-options: -e CI
       
