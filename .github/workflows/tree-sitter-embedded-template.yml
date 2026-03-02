@@ -73,6 +73,7 @@ jobs:
       - name: Regenerate parser
         if: env.BUILD != 'false'
         run: |
+          echo -e "\n[tool.setuptools]\nlicense-files = []" >> pyproject.toml
           while read -r grammar_dir; do
             pushd "$grammar_dir"
             tree-sitter generate
