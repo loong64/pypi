@@ -1,0 +1,134 @@
+name: build (hf-xet-old)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  # schedule:
+    # - cron: '0 17 * * *'
+
+env:
+  BUILD_PROFILE: release-dbgsymbols
+  IS_RELEASE: true
+
+jobs:
+  cross_build_wheels:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - target: loongarch64-unknown-linux-gnu
+            arch: loongarch64
+            manylinux: 'manylinux_2_36'
+          - target: "loongarch64-unknown-linux-musl"
+            arch: loongarch64
+            manylinux: "musllinux_1_2"
+
+    steps:
+      - name: Get Source Code
+        run: |
+          package=hf-xet
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+
+          check_file="hf_xet-${version}-.*-${{ matrix.platform.manylinux }}_${{ matrix.platform.arch }}.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          echo "VERSION=v${version}" >> $GITHUB_ENV
+
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v6
+        with:
+          repository: huggingface/xet-core
+          ref: ${{ env.VERSION }}
+
+      - name: set up python
+        if: env.BUILD != 'false'
+        uses: actions/setup-python@v6
+        with:
+          python-version: 3.x
+          cache: 'pip'
+
+      - name: Install wheel tooling
+        if: env.BUILD != 'false'
+        run: |
+          python -m pip install --upgrade pip
+          pip install wheel
+
+      - name: Update version in toml
+        if: env.BUILD != 'false'
+        run: |
+          TAG=${{ env.VERSION }}
+          VERSION=${TAG#v}
+          if [ -n "$VERSION" ]; then
+            sed -i '/^version /s/=.*$/= "'"$VERSION"'"/' hf_xet/Cargo.toml
+          fi
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          args: --profile ${{ env.BUILD_PROFILE }}  ${{ matrix.platform.features }} --out dist
+          sccache: 'true'
+          manylinux: ${{ matrix.platform.manylinux }}
+          working-directory: hf_xet
+          before-script-linux: |
+            yum install -y perl-IPC-Cmd || true
+            git config --global --add safe.directory "*"
+
+      - name: Strip debug symbols into a separate file
+        if: env.BUILD != 'false'
+        run: |
+          shopt -s expand_aliases
+          sudo apt-get update
+          sudo apt-get install -y binutils-loongarch64-linux-gnu
+          alias objcopy=loongarch64-linux-gnu-objcopy
+
+          mkdir hf_xet/dbg
+          mkdir dist
+          pushd dist 
+          cp ../hf_xet/dist/* .
+          LATEST_WHEEL=$(ls -tr1 *.whl | tail -n 1)
+          WHEEL_VERSION=$(echo $LATEST_WHEEL | cut -d '-' -f 2)
+          SYMBOL_FILE=hf_xet-musllinux-${{ matrix.platform.python-target }}.abi3.so.dbg
+          wheel unpack $LATEST_WHEEL 
+          objcopy --only-keep-debug hf_xet-${WHEEL_VERSION}/hf_xet/hf_xet.abi3.so hf_xet-${WHEEL_VERSION}/hf_xet/${SYMBOL_FILE}
+          objcopy --strip-debug hf_xet-${WHEEL_VERSION}/hf_xet/hf_xet.abi3.so
+          objcopy --add-gnu-debuglink=hf_xet-${WHEEL_VERSION}/hf_xet/${SYMBOL_FILE} hf_xet-${WHEEL_VERSION}/hf_xet/hf_xet.abi3.so
+          mv hf_xet-${WHEEL_VERSION}/hf_xet/${SYMBOL_FILE} ../hf_xet/dbg/${SYMBOL_FILE}
+          wheel pack hf_xet-${WHEEL_VERSION} 
+          rm -rf hf_xet-${WHEEL_VERSION}
+
+      - name: Check wheel
+        run: |
+          ls -al dist/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine==6.0.1
+          for file in dist/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
