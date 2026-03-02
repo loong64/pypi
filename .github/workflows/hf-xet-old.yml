@@ -80,6 +80,7 @@ jobs:
           if [ -n "$VERSION" ]; then
             sed -i '/^version /s/=.*$/= "'"$VERSION"'"/' hf_xet/Cargo.toml
           fi
+          find . -name "pyproject.toml" -exec sed -i '/^python-source = .*/d' {} \;
 
       - name: Build wheels
         if: env.BUILD != 'false'
@@ -91,7 +92,7 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux }}
           working-directory: hf_xet
           before-script-linux: |
-            yum install -y perl-IPC-Cmd || true
+            apt-get update && apt-get install libatomic-ops-dev -y
             git config --global --add safe.directory "*"
 
       - name: Strip debug symbols into a separate file
@@ -105,7 +106,7 @@ jobs:
           mkdir hf_xet/dbg
           mkdir dist
           pushd dist 
-          cp ../hf_xet/dist/* .
+          cp ../hf_xet/dist/*-abi3-* .
           LATEST_WHEEL=$(ls -tr1 *.whl | tail -n 1)
           WHEEL_VERSION=$(echo $LATEST_WHEEL | cut -d '-' -f 2)
           SYMBOL_FILE=hf_xet-musllinux-${{ matrix.platform.python-target }}.abi3.so.dbg

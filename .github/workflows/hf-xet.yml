@@ -95,7 +95,7 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux }}
           working-directory: hf_xet
           before-script-linux: |
-            yum install -y perl-IPC-Cmd || true
+            apt-get update && apt-get install libatomic-ops-dev -y
             git config --global --add safe.directory "*"
 
       - name: Strip debug symbols into a separate file
