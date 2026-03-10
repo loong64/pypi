@@ -77,7 +77,7 @@ jobs:
         if: env.BUILD != 'false'
         uses: actions/checkout@v6
         with:
-          repository: MacPython/openblas-libs
+          repository: loong64/openblas-libs
           ref: ${{ env.APP_VERSION }}
           submodules: recursive
           fetch-depth: 0
