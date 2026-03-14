@@ -128,6 +128,29 @@ jobs:
           ls -al dist/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        if: env.upload == 'true'
+        with:
+          name: wheels-${{ matrix.python-version }}-${{ matrix.platform.arch }}
+          path: dist/
+
+  upload_wheels:
+    needs: cross_build_wheels
+    runs-on: ubuntu-slim
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v8
+        with:
+          path: dist
+          pattern: wheels-*
+          merge-multiple: true
+
+      - name: Check wheel
+        run: |
+          ls -al dist/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
