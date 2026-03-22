@@ -12,14 +12,16 @@ on:
     - cron: '0 15 * * *'
 
 jobs:
-  manylinux:
-    runs-on: ${{ matrix.os }}
+  cross_build_wheels:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-24.04' ]
-        arch: [ 'loongarch64' ]
-        build: [ "manylinux_", "musllinux_" ]
+        platform:
+          - target: loongarch64-unknown-linux-gnu
+            arch: loongarch64
+            manylinux: 'manylinux_2_36'
+
     steps:
       - name: Get Source Code
         run: |
@@ -42,46 +44,56 @@ jobs:
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
+          echo "VERSION=v${version}" >> $GITHUB_ENV
 
-          wget -O - "$download_url" | tar xz --strip-components=1
-
-          if [ "${{ matrix.build }}" = "manylinux_" ]; then
-            sed -i 's/manylinux2014/manylinux_2_36/g' setup.py
-          fi
-
-      - name: Setup QEMU
+      - name: Checkout
         if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
+        uses: actions/checkout@v6
+        with:
+          repository: kreuzberg-dev/tree-sitter-language-pack
+          ref: ${{ env.VERSION }}
+
+      - name: Setup Node
+        if: env.BUILD != 'false'
+        uses: actions/setup-node@v6
+
+      - name: Install tree-sitter CLI
+        if: env.BUILD != 'false'
+        run: npm install -g tree-sitter-cli
+
+      - name: Install uv
+        if: env.BUILD != 'false'
+        uses: astral-sh/setup-uv@v7
+
+      - name: Install dependencies
+        if: env.BUILD != 'false'
+        run: uv sync --no-install-project
+
+      - name: Clone vendors
+        if: env.BUILD != 'false'
+        run: |
+          mkdir -p parsers
+          uv run --no-sync scripts/clone_vendors.py
+          rm -rf .venv
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.3.1
-        env:
-          CIBW_ARCHS: ${{ matrix.arch }}
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BUILD_FRONTEND: "build[uv]"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
-          CIBW_REPAIR_WHEEL_COMMAND_LINUX: >
-            mkdir -p dist {dest_dir} &&
-            cp -f {wheel} {dest_dir}
-          CIBW_SKIP: "cp31?t-*"
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --manifest-path crates/ts-pack-python/Cargo.toml
 
       - name: Check wheel
         run: |
-          ls -al wheelhouse/*.whl || exit 0
+          ls -al dist/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in wheelhouse/*.whl; do
+          for file in dist/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:
