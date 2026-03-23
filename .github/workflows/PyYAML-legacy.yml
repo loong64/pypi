@@ -89,7 +89,7 @@ jobs:
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Build libyaml
         if: env.BUILD != 'false' && steps.cached_libyaml.outputs.cache-hit != 'true'

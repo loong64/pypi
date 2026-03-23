@@ -37,10 +37,10 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
       - name: Setup QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Build wheels
-        uses: loong64/cibuildwheel@v3.3.0
+        uses: loong64/cibuildwheel@v3.4.0
         env:
           CIBW_ARCHS: loongarch64
           CIBW_BUILD_VERBOSITY: 1

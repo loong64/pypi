@@ -79,7 +79,7 @@ jobs:
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
       
       - name: Print some Environment variable
         run: |
@@ -89,7 +89,7 @@ jobs:
 
       - name: Build and Test wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.3.0
+        uses: loong64/cibuildwheel@v3.4.0
         env:
           CIBW_ARCHS: ${{matrix.PLAT}}
           CIBW_BUILD:  "cp39-${{ matrix.MB_ML_LIBC }}_${{matrix.PLAT}}"

@@ -54,11 +54,11 @@ jobs:
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@v4
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.3.0
+        uses: loong64/cibuildwheel@v3.4.0
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
