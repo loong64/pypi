@@ -51,6 +51,8 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
+          sed -i 's@free-threaded-support = @# free-threaded-support = @g' pyproject.toml
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v4
