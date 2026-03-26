@@ -64,18 +64,11 @@ jobs:
           mkdir -p temp pypandoc/files
           cd temp
           wget "https://snapshot.debian.org/archive/debian/20260323T083223Z/pool/main/p/pandoc/pandoc_3.9-1_loong64.deb"
-          wget "https://snapshot.debian.org/archive/debian/20260323T083223Z/pool/main/l/lua5.4/liblua5.4-0_5.4.8-1+b1_loong64.deb"
-          wget "https://snapshot.debian.org/archive/debian/20260323T083223Z/pool/main/n/numactl/libnuma1_2.0.19-1+b1_loong64.deb"
           ar p pandoc_3.9-1_loong64.deb data.tar.xz > pandoc.tar.xz
-          ar p liblua5.4-0_5.4.8-1+b1_loong64.deb data.tar.xz > liblua.tar.xz
-          ar p libnuma1_2.0.19-1+b1_loong64.deb data.tar.xz > libnuma.tar.xz
           tar -xf pandoc.tar.xz
-          tar -xf liblua.tar.xz
-          tar -xf libnuma.tar.xz
           cd -
           cp temp/usr/bin/pandoc pypandoc/files/pandoc
           cp temp/usr/share/doc/pandoc/copyright pypandoc/files/copyright.pandoc
-          mv temp/usr/lib/loongarch64-linux-gnu pypandoc/files/lib64
           rm -rf temp/*
 
       - name: Build wheels
@@ -87,8 +80,9 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "cp39-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL: >
-            mv pypandoc/files/lib64/* /usr/local/lib64/ &&
-            rm -rf pypandoc/files/lib64
+            dnf install -y lua-devel numactl-devel &&
+            cp /lib64/liblua-5.4.so /lib64/liblua5.4.so.0.0.0 &&
+            ln -s /lib64/liblua5.4.so.0.0.0 /lib64/liblua5.4.so.0
           CIBW_BEFORE_BUILD: >
             cp -r pypandoc {package}/pypandoc &&
             cp README.md {package}/README.md &&
