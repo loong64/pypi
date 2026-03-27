@@ -11,6 +11,9 @@ on:
   schedule:
     - cron: '0 17 * * *'
 
+env:
+  PYTHON_ABI_VERSION: "3.10"
+
 jobs:
   linux-cross:
     runs-on: ubuntu-24.04
@@ -21,9 +24,9 @@ jobs:
           - target: loongarch64-unknown-linux-gnu
             arch: loongarch64
             manylinux: 'manylinux_2_36'
-          # - target: loongarch64-unknown-linux-musl
-          #   arch: loongarch64
-          #   manylinux: "musllinux_1_2"
+          - target: loongarch64-unknown-linux-musl
+            arch: loongarch64
+            manylinux: "musllinux_1_2"
     steps:
       - name: Get Source Code
         run: |
@@ -59,8 +62,15 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          command: build
-          args: --release --out dist --interpreter 3.8 3.9 3.10 3.11 3.12 3.13 -m crates/jsonschema-py/Cargo.toml
+          args: --release -m crates/jsonschema-py/Cargo.toml --out dist --interpreter ${{ env.PYTHON_ABI_VERSION }}
+
+      - name: Build freethreaded wheels
+        if: env.BUILD != 'false'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release -m crates/jsonschema-py/Cargo.toml --out dist --interpreter 3.13t 3.14t
 
       - name: Check wheel
         run: |
