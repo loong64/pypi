@@ -1,0 +1,112 @@
+name: build (tree-sitter-html)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        default: 'latest'
+        description: 'Package version'
+        type: string
+        required: true
+  schedule:
+    - cron: '0 17 * * *'
+
+jobs:
+  build_wheels:
+    name: Build ${{ matrix.arch }} wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ 'ubuntu-24.04' ]
+        arch: [ 'loongarch64' ]
+        build: [ "manylinux_", "musllinux_" ]
+    steps:
+      - name: Get Source Code
+        run: |
+          package=tree-sitter-html
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            version="latest"
+          else
+            version=${{ github.event.inputs.version }}
+          fi
+          if [ "$version" = "latest" ]; then
+            version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
+          fi
+          echo "Building package: ${package} version: ${version}"
+          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+
+          check_file="tree_sitter_html-${version}-.*manylinux_2_38_loongarch64.whl"
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+            echo "Package ${package} ${version} already exists"
+            echo "BUILD=false" >> $GITHUB_ENV
+            exit 0
+          fi
+
+          echo "VERSION=v${version}" >> $GITHUB_ENV
+
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v6
+        with:
+          repository: tree-sitter/tree-sitter-html
+          ref: ${{ env.VERSION }}
+
+      - name: Set up tree-sitter CLI
+        if: env.BUILD != 'false'
+        uses: tree-sitter/setup-action/cli@v2
+
+      - name: Install dependencies
+        if: env.BUILD != 'false'
+        run: |-
+          if jq -e "$JQ_SCRIPT" package.json >/dev/null; then
+            npm i --ignore-scripts --omit peer --omit optional
+          fi
+        env:
+          JQ_SCRIPT: >-
+            .dependencies + .devDependencies |
+            with_entries(select(
+            (.key | startswith("tree-sitter-"))
+            and (.key != "tree-sitter-cli")
+            )) | length > 0
+
+      - name: Regenerate parser
+        if: env.BUILD != 'false'
+        run: |
+          echo -e "\n[tool.setuptools]\nlicense-files = []" >> pyproject.toml
+          while read -r grammar_dir; do
+            pushd "$grammar_dir"
+            tree-sitter generate
+            popd > /dev/null
+          done < <(jq -r '.grammars[].path // "."' tree-sitter.json)
+        env:
+          TREE_SITTER_ABI_VERSION: 15
+
+      - name: Setup QEMU
+        if: env.BUILD != 'false'
+        uses: docker/setup-qemu-action@v4
+
+      - name: Build wheels
+        if: env.BUILD != 'false'
+        uses: loong64/cibuildwheel@v3.4.0
+        env:
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_SKIP: "cp31?t-*"
+
+      - name: Check wheel
+        run: |
+          ls -al wheelhouse/*.whl || exit 0
+          echo "upload=true" >> $GITHUB_ENV
+
+      - name: Upload wheels
+        if: env.upload == 'true'
+        run: |
+          pip install twine
+          for file in wheelhouse/*.whl; do
+            twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
+          done
+        env:
+          TWINE_USERNAME: ${{ github.repository_owner }}
+          TWINE_PASSWORD: ${{ secrets.GL_TOKEN }}
