@@ -67,6 +67,7 @@ jobs:
           CIBW_BEFORE_BUILD_LINUX: >
             pip install -U cmake pip setuptools wheel && python setup.py build_c_core
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
           CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
