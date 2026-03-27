@@ -49,7 +49,7 @@ jobs:
         if: env.BUILD != 'false'
         uses: actions/checkout@v6
         with:
-          repository: tree-sitter-javascript
+          repository: tree-sitter/tree-sitter-javascript
           ref: ${{ env.VERSION }}
 
       - name: Set up tree-sitter CLI
