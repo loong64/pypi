@@ -60,7 +60,16 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: "${{ matrix.platform.target }}"
-          args: --release -o dist
+          args: --release -o dist --manifest-path crates/primp-python/Cargo.toml
+          sccache: true
+          manylinux: ${{ matrix.platform.manylinux || 'auto' }}
+
+      - name: Build free-threaded wheels
+        if: env.BUILD != 'false'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: "${{ matrix.platform.target }}"
+          args: --release -o dist -i python3.14t --manifest-path crates/primp-python/Cargo.toml
           sccache: true
           manylinux: ${{ matrix.platform.manylinux || 'auto' }}
 
