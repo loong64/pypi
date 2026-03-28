@@ -77,7 +77,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.2.1
+        uses: loong64/cibuildwheel@v3.4.0
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_CONFIG_SETTINGS: "cmake.define.RUN_PATCHELF_TEST=OFF"
