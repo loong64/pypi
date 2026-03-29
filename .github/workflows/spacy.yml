@@ -69,7 +69,7 @@ jobs:
             CC="/opt/clang/bin/clang"
             CXX="/opt/clang/bin/clang++"
             LDFLAGS="-fuse-ld=lld"
-            PIP_CONSTRAINT = "build-constraints.txt"
+            PIP_CONSTRAINT="build-constraints.txt"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
