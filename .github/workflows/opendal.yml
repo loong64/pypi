@@ -68,14 +68,14 @@ jobs:
 
       - name: Check wheel
         run: |
-          ls -al dist/*.whl || exit 0
+          ls -al bindings/python/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in dist/*.whl; do
+          for file in bindings/python/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:

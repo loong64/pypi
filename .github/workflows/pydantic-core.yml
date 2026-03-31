@@ -8,6 +8,11 @@ on:
         description: 'Package version'
         type: string
         required: true
+      tag:
+        default: 'main'
+        description: 'Git tag or branch to build from'
+        type: string
+        required: true
   schedule:
     - cron: '0 17 * * *'
 
@@ -30,8 +35,10 @@ jobs:
           package=pydantic-core
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
+            tag="main"
           else
             version=${{ github.event.inputs.version }}
+            tag=${{ github.event.inputs.tag }}
           fi
           if [ "$version" = "latest" ]; then
             version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
@@ -46,13 +53,14 @@ jobs:
           fi
 
           echo "VERSION=${version}" >> $GITHUB_ENV
+          echo "TAG=${tag}" >> $GITHUB_ENV
 
       - name: Checkout
         if: env.BUILD != 'false'
         uses: actions/checkout@v6
         with:
           repository: pydantic/pydantic
-          ref: main
+          ref: ${{ env.TAG }}
 
       - name: Patch build
         if: env.BUILD != 'false'
@@ -74,14 +82,14 @@ jobs:
       
       - name: Check wheel
         run: |
-          ls -al dist/*.whl || exit 0
+          ls -al pydantic-core/dist/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in dist/*.whl; do
+          for file in pydantic-core/dist/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:
