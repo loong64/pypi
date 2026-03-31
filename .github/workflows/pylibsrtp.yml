@@ -66,6 +66,7 @@ jobs:
         uses: loong64/cibuildwheel@v3.4.0
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_BUILD: python scripts/build-libsrtp.py /tmp/vendor
           # CIBW_BEFORE_BUILD_WINDOWS: scripts\build-libsrtp.bat C:\cibw\vendor
           CIBW_ENVIRONMENT: CFLAGS=-I/tmp/vendor/include LDFLAGS=-L/tmp/vendor/lib PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig
