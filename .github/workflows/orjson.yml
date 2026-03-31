@@ -22,22 +22,25 @@ env:
 
 jobs:
   manylinux_cross:
-    runs-on: ubuntu-latest
+    name: "manylinux_${{ matrix.target.arch }}_${{ matrix.python.interpreter }}"
+    runs-on: ${{ matrix.target.runner }}
     strategy:
       fail-fast: false
       matrix:
         python: [
-          { interpreter: 'python3.14', abi: 'cp314-cp314', manylinux: 'manylinux_2_36', publish: true },
-          { interpreter: 'python3.13', abi: 'cp313-cp313', manylinux: 'manylinux_2_36', publish: true },
-          { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', publish: true },
-          { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', publish: true },
-          { interpreter: 'python3.10', abi: 'cp310-cp310', manylinux: 'manylinux_2_36', publish: true },
+          { interpreter: 'python3.14', abi: 'cp314-cp314', manylinux: 'manylinux_2_36', maturin-version: 'v1.11.5', publish: true },
+          { interpreter: 'python3.13', abi: 'cp313-cp313', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
+          { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
+          { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
+          { interpreter: 'python3.10', abi: 'cp310-cp310', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
         ]
         target: [
           {
             arch: 'loongarch64',
             cflags: '-Os -fstrict-aliasing',
-            features: '',
+            features: 'generic_simd,no_panic',
+            image: 'ghcr.io/rust-cross/manylinux_2_36-cross:loongarch64',
+            runner: "ubuntu-24.04",
             rustflags: '-Z unstable-options -C panic=immediate-abort -Z mir-opt-level=4 -D warnings',
             target: 'loongarch64-unknown-linux-gnu',
           },
@@ -56,7 +59,7 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
 
-          check_file="${package}-${version}-.*-manylinux_2_36_loongarch64.whl"
+          check_file="${package}-${version}-${{ matrix.python.abi }}-${{ matrix.python.manylinux }}_loongarch64.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
@@ -87,11 +90,13 @@ jobs:
           LDFLAGS: "-Wl,--as-needed"
           RUSTFLAGS: "${{ matrix.target.rustflags }}"
         with:
-          target: "${{ matrix.target.target }}"
+          args: --release --strip --out=dist --features=${{ matrix.target.features }} -i ${{ matrix.python.interpreter }}
+          container: "${{ matrix.target.image }}"
+          manylinux: "${{ matrix.python.manylinux }}"
+          maturin-version: "${{ matrix.python.maturin-version }}"
           rust-toolchain: "${{ env.RUST_TOOLCHAIN }}"
           rustup-components: rust-src
-          manylinux: "${{ matrix.python.manylinux }}"
-          args: --release --strip --out=dist --features=${{ matrix.target.features }} -i ${{ matrix.python.interpreter }}
+          target: "${{ matrix.target.target }}"
 
       - name: Check wheel
         run: |
