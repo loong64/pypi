@@ -55,7 +55,7 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
           llvm_version=$(curl -sL https://github.com/numba/llvmlite/raw/refs/tags/v${version}/conda-recipes/llvmdev/meta.yaml | grep -E '{%\s*set\s+version\s*=' | awk -F'"' '{print $2}')
-          wget -qO /tmp/llvm-build.tar.gz "https://github.com/${{ github.repository }}/releases/download/llvm-${llvm_version}/llvm-${llvm_version}-loong64.tar.gz"
+          wget -qO /tmp/llvm-build.tar.gz "https://github.com/loong64/llvmlite/releases/download/llvm-${llvm_version}/llvm-${llvm_version}-loong64.tar.gz"
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -73,7 +73,6 @@ jobs:
           CIBW_ENVIRONMENT_PASS_LINUX: "PIP_EXTRA_INDEX_URL CMAKE_PREFIX_PATH LLVMLITE_PACKAGE_FORMAT"
           CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: "auditwheel --verbose repair -w {dest_dir} {wheel}"
-          CIBW_SKIP: "cp3??t-*"
 
       - name: Check wheels
         run: |
