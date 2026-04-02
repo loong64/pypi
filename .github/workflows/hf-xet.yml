@@ -132,7 +132,7 @@ jobs:
         uses: actions/upload-artifact@v7
         if: env.upload == 'true'
         with:
-          name: wheels-${{ matrix.python-version }}-${{ matrix.platform.arch }}
+          name: wheels-${{ matrix.python-version }}-${{ matrix.platform.manylinux }}_${{ matrix.platform.arch }}
           path: dist/
 
   upload_wheels:
