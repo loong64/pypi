@@ -38,7 +38,7 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
 
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.platform.manylinux }}_${{ matrix.platform.arch }}.whl"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*-${{ matrix.platform.manylinux }}_${{ matrix.platform.arch }}.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0

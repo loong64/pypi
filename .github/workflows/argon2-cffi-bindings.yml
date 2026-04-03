@@ -39,7 +39,7 @@ jobs:
           # argon2_cffi_bindings-21.2.0-cp39-abi3-manylinux_2_36_loongarch64.manylinux_2_38_loongarch64.whl
           # argon2_cffi_bindings-21.2.0-cp39-abi3-musllinux_1_2_loongarch64.whl 
           check_file="argon2_cffi_bindings-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
-          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package/./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
+          if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
             exit 0
