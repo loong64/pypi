@@ -20,7 +20,6 @@ jobs:
         PYTHON:
           - { VERSION: "cp38", ABI_VERSION: 'cp38' }
           - { VERSION: "cp39", ABI_VERSION: 'cp39' }
-          - { VERSION: "cp313t" }
           - { VERSION: "cp314t" }
         MANYLINUX:
           - { NAME: "manylinux_2_38_loongarch64", CONTAINER: "cryptography-manylinux_2_38:loongarch64", RUNNER: "ubuntu-24.04" }
@@ -83,10 +82,9 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_BUILD_FRONTEND: "pip"
-          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
             RUSTUP_HOME="/root/.rustup"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH

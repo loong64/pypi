@@ -72,12 +72,11 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL: bash scripts/cibw_before_all.sh
-          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_REPAIR_WHEEL_COMMAND: >
             bash scripts/cibw_repair_wheel_command.sh {dest_dir} {wheel}

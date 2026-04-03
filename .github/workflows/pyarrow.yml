@@ -68,7 +68,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         with:
           package-dir: python
         env:
@@ -88,7 +88,6 @@ jobs:
             CMAKE_PREFIX_PATH=/tmp/local
             LD_LIBRARY_PATH=/tmp/local/lib:${LD_LIBRARY_PATH}
             PYARROW_PARALLEL=4
-          CIBW_ENABLE: cpython-freethreading
 
       - name: Check wheel
         run: |

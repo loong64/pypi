@@ -40,7 +40,7 @@ jobs:
         uses: docker/setup-qemu-action@v4
 
       - name: Build wheels
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: loongarch64
           CIBW_BUILD_VERBOSITY: 1

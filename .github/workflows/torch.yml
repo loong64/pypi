@@ -65,7 +65,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
@@ -75,7 +75,6 @@ jobs:
             yum install -y ccache
           CIBW_BEFORE_BUILD: >
             pip install https://github.com/loong64/auditwheel/releases/download/6.2.0/auditwheel-6.2.0-py3-none-any.whl
-          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
             BUILD_TEST=0
             PYTORCH_BUILD_NUMBER=${{ env.PYTORCH_BUILD_NUMBER }}

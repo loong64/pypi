@@ -20,7 +20,7 @@ jobs:
       matrix:
         arch: [ 'loongarch64' ]
         build: [ 'manylinux_', 'musllinux_' ]
-        python: [ 'cp311', 'cp312', 'cp313', 'cp313t', 'cp314', 'cp314t' ]
+        python: [ 'cp311', 'cp312', 'cp313', 'cp314', 'cp314t' ]
     steps:
       - name: Get Source Code
         run: |
@@ -57,13 +57,12 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
             curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash
-          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
             CC="/opt/clang/bin/clang"
             CXX="/opt/clang/bin/clang++"

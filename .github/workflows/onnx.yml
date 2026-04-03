@@ -68,7 +68,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
@@ -80,7 +80,6 @@ jobs:
             rm -rf .setuptools-cmake-build &&
             pip install -r requirements-release_build.txt &&
             pip install cmake
-          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
             CC="/opt/clang/bin/clang"
             CXX="/opt/clang/bin/clang++"

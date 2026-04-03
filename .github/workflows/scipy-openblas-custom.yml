@@ -94,7 +94,7 @@ jobs:
 
       - name: Build and Test wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: ${{matrix.PLAT}}
           CIBW_BUILD:  "cp39-${{ matrix.MB_ML_LIBC }}_${{matrix.PLAT}}"

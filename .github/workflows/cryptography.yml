@@ -84,10 +84,9 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.0
+        uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_BUILD_FRONTEND: "build[uv]"
-          CIBW_ENABLE: cpython-freethreading
           CIBW_ENVIRONMENT_LINUX: >
             OPENSSL_DIR="/opt/pyca/cryptography/openssl"
             OPENSSL_STATIC=1
