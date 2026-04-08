@@ -21,6 +21,7 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_", "musllinux_" ]
+        lapiversion: [ "3.9", "3.12" ]
     steps:
       - name: Get Source Code
         run: |
@@ -50,6 +51,7 @@ jobs:
               exit 1
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
+          sed -i 's/"ppc64le", "riscv64"/"loongarch64", "ppc64le", "riscv64"/g' pyproject.toml
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -61,7 +63,10 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH LUPA_LIMITED_API
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=${{ matrix.lapiversion }}"
+          CIBW_SKIP: "cp31?t-*"
+          LUPA_LIMITED_API: "${{ matrix.lapiversion }}"
 
       - name: Check wheel
         run: |
