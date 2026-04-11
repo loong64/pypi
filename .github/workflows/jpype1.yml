@@ -20,7 +20,8 @@ jobs:
       matrix:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
-        build: [ "manylinux_", "musllinux_" ]
+        # build: [ "manylinux_", "musllinux_" ]
+        build: [ "manylinux_" ]
     steps:
       - name: Get Source Code
         run: |
@@ -43,14 +44,14 @@ jobs:
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
+          echo "VERSION=v${version}" >> $GITHUB_ENV
 
-          wget -O - "$download_url" | tar xz --strip-components=1
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v6
+        with:
+          repository: jpype-project/jpype
+          ref: ${{ env.VERSION }}
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -58,11 +59,27 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.1
-        env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+        run: |
+          set -ex
+          package_name=jpype1
+          case ${{ matrix.build }} in
+            manylinux_)
+              plat="manylinux_2_38_${{ matrix.arch }}"
+              image="ghcr.io/loong64/${plat}"
+              ;;
+            musllinux_)
+              plat="musllinux_1_2_${{ matrix.arch }}"
+              image="ghcr.io/loong64/${plat}"
+              ;;
+          esac
+          docker run --rm \
+            --platform linux/loong64 \
+            -e PIP_EXTRA_INDEX_URL \
+            -e RUNNER_ARCH \
+            -e PLAT=${plat} \
+            -e package_name=${package_name} \
+            -v `pwd`:/io \
+          ${image} /io/.azure/scripts/build-wheels.sh
 
       - name: Check wheel
         run: |
