@@ -8,11 +8,6 @@ on:
         description: 'Package version'
         type: string
         required: true
-      tag:
-        default: 'main'
-        description: 'Git tag or branch to build from'
-        type: string
-        required: true
   schedule:
     - cron: '0 17 * * *'
 
@@ -35,10 +30,8 @@ jobs:
           package=pydantic-core
           if [ "${{ github.event_name }}" = "schedule" ]; then
             version="latest"
-            tag="main"
           else
             version=${{ github.event.inputs.version }}
-            tag=${{ github.event.inputs.tag }}
           fi
           if [ "$version" = "latest" ]; then
             version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
@@ -52,28 +45,26 @@ jobs:
             exit 0
           fi
 
-          echo "VERSION=${version}" >> $GITHUB_ENV
-          echo "TAG=${tag}" >> $GITHUB_ENV
-
-      - name: Checkout
-        if: env.BUILD != 'false'
-        uses: actions/checkout@v6
-        with:
-          repository: pydantic/pydantic
-          ref: ${{ env.TAG }}
-
-      - name: Patch build
-        if: env.BUILD != 'false'
-        run: |
-          if ! grep -q '^version = "${{ env.VERSION }}"' pydantic-core/Cargo.toml; then
-            exit 1
+          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          if [ -z "$download_url" ]; then
+              echo "No source found for package ${package} version ${version}"
+              exit 1
           fi
+          wget -O - "$download_url" | tar xz --strip-components=1
+
+      - uses: actions/setup-python@v6
+        if: env.BUILD != 'false'
+        with:
+          python-version: '3.13'
+
+      - run: pip install -U twine 'ruff==0.5.0' typing_extensions
+        if: env.BUILD != 'false'
 
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
         with:
-          working-directory: pydantic-core
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13 3.14 3.14t
@@ -82,14 +73,14 @@ jobs:
       
       - name: Check wheel
         run: |
-          ls -al pydantic-core/dist/*.whl || exit 0
+          ls -al dist/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in pydantic-core/dist/*.whl; do
+          for file in dist/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:
