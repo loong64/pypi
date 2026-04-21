@@ -53,6 +53,12 @@ jobs:
 
           sed -i 's@free-threaded-support = @# free-threaded-support = @g' pyproject.toml
 
+          if [ "${{ matrix.build }}" = "musllinux_" ]; then
+            cd native
+            cargo update --package libc --precise 0.2.174
+            cd -
+          fi
+
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v4
