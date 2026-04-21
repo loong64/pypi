@@ -13,7 +13,7 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.arch }} wheels on ubuntu-24.04
+    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
