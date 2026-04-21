@@ -15,6 +15,7 @@ env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
   LIBPQ_VERSION: "17.9"
   OPENSSL_VERSION: "3.5.6"
+  PQ_FLAGS: ""
 
 jobs:
   build_wheels:
@@ -71,26 +72,14 @@ jobs:
       - name: Prepare build
         if: env.BUILD != 'false'
         run: |
-          if [ -f "scripts/build/wheel_linux_before_all.sh" ]; then
-            if [ "${{ matrix.arch }}" = "loongarch64" ]; then
-              sed -i 's@almalinux@anolis@g' scripts/build/wheel_linux_before_all.sh
-            fi
-          fi
-          if [ -f "scripts/build/build_libpq.sh" ]; then
-            if [ "${{ matrix.arch }}" = "loongarch64" ]; then
-              sed -i 's@almalinux@anolis@g' scripts/build/build_libpq.sh scripts/build/print_so_versions.sh
-              sed -i 's@pam-devel@perl-lib perl-FindBin pam-devel@g' scripts/build/build_libpq.sh
-            fi
-            sed -i 's@linux-pam-dev@linux-pam-dev icu-dev perl-utils@g' scripts/build/build_libpq.sh
-            sed -i 's@pam-devel@pam-devel libicu-devel openldap-devel openssl-devel@g' scripts/build/build_libpq.sh
-          fi
+          wget -qO - https://github.com/loong64/psycopg2/commit/b6d03a781d454b216dca2ee35f784f09fa06f980.patch | patch -p1
 
       - name: Cache libpq build
         if: env.BUILD != 'false'
         uses: actions/cache@v4
         with:
           path: /tmp/libpq.build
-          key: libpq-${{ env.LIBPQ_VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}
+          key: libpq-${{ matrix.platform }}-${{ matrix.arch }}-${{ env.LIBPQ_VERSION }}-${{ env.OPENSSL_VERSION }}${{ env.PQ_FLAGS }}
 
       - name: Build wheels
         if: env.BUILD != 'false'
