@@ -56,21 +56,9 @@ jobs:
               # exit 0
           # fi
           # wget -O - "$download_url" | tar xz --strip-components=1
+          wget -O - https://codeberg.org/ziglang/zig-pypi/archive/main.tar.gz | tar xz --strip-components=1
 
-      - name: Checkout
-        if: env.SOURCE == 'false'
-        uses: actions/checkout@v6
-        with:
-          repository: ziglang/zig-pypi
-
-      - name: Patch build
-        if: env.BUILD != 'false'
-        run: |
-          set -ex
-          if [ "${{ matrix.arch }}" = "loongarch64" ]; then
-            wget -qO - https://github.com/loong64/zig-pypi/commit/f50378b842c92b974f6fd40ffa1475dc3c7ffa0c.patch | git apply
-            git diff
-          fi
+          wget -qO - https://github.com/loong64/zig-pypi/commit/f50378b842c92b974f6fd40ffa1475dc3c7ffa0c.patch | patch -p1
 
       - name: Setup UV
         if: env.BUILD != 'false'
