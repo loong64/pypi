@@ -12,7 +12,7 @@ on:
     - cron: '0 17 * * *'
 
 jobs:
-  linux-cross:
+  build_wheels:
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
