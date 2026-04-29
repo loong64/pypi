@@ -53,37 +53,36 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-      - uses: actions/setup-python@v6
+      - name: Setup QEMU
         if: env.BUILD != 'false'
-        with:
-          python-version: '3.13'
-
-      - name: Prepare build
-        if: env.BUILD != 'false'
-        run: |
-          sed -i '/^\[dependencies\]$/a aws-lc-sys = { version = "0.28.0", features = ["bindgen"] }' Cargo.toml
-          cargo update -p aws-lc-sys
+        uses: docker/setup-qemu-action@v4
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: PyO3/maturin-action@v1
-        with:
-          target: ${{ matrix.platform.target }}
-          manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist --interpreter 3.9 3.10 3.11 3.12 3.13
-          rust-toolchain: stable
-          before-script-linux: bash -c "$(wget -O - https://apt.llvm.org/llvm.sh)"
+        uses: loong64/cibuildwheel@v3.4.1
+        env:
+          CIBW_ARCHS: "${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            (command -v apk && apk add clang clang-dev) || true &&
+            (command -v yum && yum -y install clang clang-devel) || true &&
+            curl -sSf https://sh.rustup.rs | sh -s -- -y
+          CIBW_ENVIRONMENT_LINUX: >
+            PATH="$HOME/.cargo/bin:$PATH"
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.9"
+          CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
         run: |
-          ls -al dist/*.whl || exit 0
+          ls -al wheelhouse/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in dist/*.whl; do
+          for file in wheelhouse/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:
