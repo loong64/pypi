@@ -68,17 +68,9 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_BUILD: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-8.0.json /tmp/vendor
-          # CIBW_BEFORE_BUILD_MACOS: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-8.0.json /tmp/vendor
-          # CIBW_BEFORE_BUILD_WINDOWS: python scripts\fetch-vendor.py --config-file scripts\ffmpeg-8.0.json C:\cibw\vendor
-          # CIBW_ENABLE: cpython-freethreading
+          CIBW_BEFORE_BUILD: python scripts/fetch-vendor.py --config-file scripts/ffmpeg-latest.json /tmp/vendor
           CIBW_ENVIRONMENT_LINUX: LD_LIBRARY_PATH=/tmp/vendor/lib:$LD_LIBRARY_PATH PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig
-          # CIBW_ENVIRONMENT_MACOS: PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig LDFLAGS=-headerpad_max_install_names
-          # CIBW_ENVIRONMENT_WINDOWS: INCLUDE=C:\\cibw\\vendor\\include LIB=C:\\cibw\\vendor\\lib PYAV_SKIP_TESTS=unicode_filename
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
-          # CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: delvewheel repair --add-path C:\cibw\vendor\bin -w {dest_dir} {wheel}
-          # CIBW_TEST_COMMAND: mv {project}/av {project}/av.disabled && python -m pytest {package}/tests && mv {project}/av.disabled {project}/av
-          # CIBW_TEST_REQUIRES: pytest numpy
 
       - name: Check wheel
         run: |
