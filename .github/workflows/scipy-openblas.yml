@@ -63,11 +63,6 @@ jobs:
           echo "APP_VERSION=v${version}" >> $GITHUB_ENV
           echo "OPENBLAS_COMMIT=${openblas_version}" >> $GITHUB_ENV
 
-          echo ""
-          echo "========== Build Args =========="
-          echo "APP_VERSION=${APP_VERSION}"
-          echo "OPENBLAS_COMMIT=${OPENBLAS_COMMIT}"
-
       - name: Checkout Code
         if: env.BUILD != 'false'
         uses: actions/checkout@v6
@@ -84,6 +79,7 @@ jobs:
       - name: Print some Environment variable
         run: |
           echo "PLAT: ${PLAT}".
+          sed -i 's/riscv64/loongarch64/g' ci-before-build.sh
           mkdir -p patches
           wget -qO patches/0001-fix-loongarch64-musllinux-test.patch https://github.com/loong64/openblas-libs/raw/refs/heads/patch_loong64/patches/0001-fix-loongarch64-musllinux-test.patch
 
@@ -95,9 +91,6 @@ jobs:
           CIBW_BUILD:  "cp39-${{ matrix.MB_ML_LIBC }}_${{matrix.PLAT}}"
           CIBW_BUILD_VERBOSITY: 1
           CIBW_ENVIRONMENT_LINUX: >
-            CC="/opt/clang/bin/clang"
-            CXX="/opt/clang/bin/clang++"
-            LDFLAGS="-fuse-ld=lld"
             PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple
 
       - name: Check wheel
