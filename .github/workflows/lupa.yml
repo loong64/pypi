@@ -51,7 +51,7 @@ jobs:
               exit 1
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
-          sed -i 's/"ppc64le", "riscv64"/"loongarch64", "ppc64le", "riscv64"/g' pyproject.toml
+          sed -i 's/riscv64/loongarch64/g' pyproject.toml
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
