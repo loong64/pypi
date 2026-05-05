@@ -18,7 +18,7 @@ jobs:
       fail-fast: false
       matrix:
         PYTHON:
-          - { VERSION: "cp311", ABI_VERSION: 'py38' }
+          - { VERSION: "cp311", ABI_VERSION: 'py39' }
           - { VERSION: "cp311", ABI_VERSION: 'py311' }
           - { VERSION: "cp314t" }
         MANYLINUX:
@@ -46,6 +46,7 @@ jobs:
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-manylinux_loongarch64" >> $GITHUB_ENV
               echo "CIBW_MANYLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+              echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
               ;;
             musllinux_1_2_loongarch64)
               check_file="${package}-${version}-.*musllinux_1_2_loongarch64.whl"
@@ -53,6 +54,7 @@ jobs:
               echo "CIBW_BUILD=${{ matrix.PYTHON.VERSION }}-musllinux_loongarch64" >> $GITHUB_ENV
               echo "CIBW_MUSLLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+              echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
               ;;
             *)
               echo "BUILD=false" >> $GITHUB_ENV
@@ -60,9 +62,11 @@ jobs:
               ;;
           esac
 
+          CIBW_CONFIG_SETTINGS="build-args=--sbom-include=/opt/pyca/cryptography/openssl/sbom.json"
           if [ -n "${{ matrix.PYTHON.ABI_VERSION }}" ]; then
-              echo "CIBW_CONFIG_SETTINGS=build-args=--features=pyo3/abi3-${{ matrix.PYTHON.ABI_VERSION }}" >> $GITHUB_ENV
+              CIBW_CONFIG_SETTINGS+=" build-args=--features=pyo3/abi3-${{ matrix.PYTHON.ABI_VERSION }}"
           fi
+          echo "CIBW_CONFIG_SETTINGS=${CIBW_CONFIG_SETTINGS}" >> $GITHUB_ENV
 
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
@@ -91,7 +95,7 @@ jobs:
             OPENSSL_DIR="/opt/pyca/cryptography/openssl"
             OPENSSL_STATIC=1
             RUSTUP_HOME="/root/.rustup"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
         run: |
