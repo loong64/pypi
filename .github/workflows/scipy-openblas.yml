@@ -77,6 +77,7 @@ jobs:
         uses: docker/setup-qemu-action@v4
       
       - name: Print some Environment variable
+        if: env.BUILD != 'false'
         run: |
           echo "PLAT: ${PLAT}".
           sed -i 's/riscv64/loongarch64/g' ci-before-build.sh
