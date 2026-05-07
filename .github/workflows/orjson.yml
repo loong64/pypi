@@ -13,9 +13,10 @@ on:
 
 env:
   FORCE_COLOR: "1"
+  ORJSON_BUILD_FREETHREADED: "1"
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
-  RUST_TOOLCHAIN: "nightly-2025-10-21"
-  RUST_TOOLCHAIN_STABLE: "1.85"
+  RUST_TOOLCHAIN: "nightly-2026-05-01"
+  RUST_TOOLCHAIN_STABLE: "1.95"
   UNSAFE_PYO3_BUILD_FREE_THREADED: "1"
   UNSAFE_PYO3_SKIP_VERSION_CHECK: "1"
   UV_LINK_MODE: "copy"
@@ -29,16 +30,16 @@ jobs:
       matrix:
         python: [
           { interpreter: 'python3.14', abi: 'cp314-cp314', manylinux: 'manylinux_2_36', maturin-version: 'v1.11.5', publish: true },
-          { interpreter: 'python3.13', abi: 'cp313-cp313', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
-          { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
-          { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
-          { interpreter: 'python3.10', abi: 'cp310-cp310', manylinux: 'manylinux_2_36', maturin-version: 'v1.12.6', publish: true },
+          { interpreter: 'python3.13', abi: 'cp313-cp313', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
+          { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
+          { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
+          { interpreter: 'python3.10', abi: 'cp310-cp310', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
         ]
         target: [
           {
             arch: 'loongarch64',
             cflags: '-Os -fstrict-aliasing',
-            features: 'generic_simd,no_panic',
+            features: 'no_panic,optimize',
             image: 'ghcr.io/rust-cross/manylinux_2_36-cross:loongarch64',
             runner: "ubuntu-24.04",
             rustflags: '-Z unstable-options -C panic=immediate-abort -Z mir-opt-level=4 -D warnings',
