@@ -54,7 +54,7 @@ jobs:
             exit 0
           fi
 
-          echo "VERSION=v${version}" >> $GITHUB_ENV
+          echo "VERSION=${version}" >> $GITHUB_ENV
 
       - name: Checkout
         if: env.BUILD != 'false'
