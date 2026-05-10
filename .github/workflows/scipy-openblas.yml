@@ -80,7 +80,7 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           echo "PLAT: ${PLAT}".
-          sed -i 's/riscv64/loongarch64/g' ci-before-build.sh
+          # sed -i 's/riscv64/loongarch64/g' ci-before-build.sh
           mkdir -p patches
           wget -qO patches/0001-fix-loongarch64-musllinux-test.patch https://github.com/loong64/openblas-libs/raw/refs/heads/patch_loong64/patches/0001-fix-loongarch64-musllinux-test.patch
 
