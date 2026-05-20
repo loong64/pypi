@@ -42,18 +42,34 @@ jobs:
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
+          echo "VERSION=lxml-${version}" >> $GITHUB_ENV
 
-          wget -O - "$download_url" | tar xz --strip-components=1
+      - name: Checkout
+        if: env.BUILD != 'false'
+        uses: actions/checkout@v6
+        with:
+          repository: lxml/lxml
+          ref: ${{ env.VERSION }}
 
-          if [ -f "pyproject.toml" ]; then
-            sed -i 's/ -flto//g' pyproject.toml
-          fi
+      - name: Prepare libraries
+        if: env.BUILD != 'false'
+        run: |
+          ZLIB_VERSION=$(awk -F'"' '/ZLIB_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          LIBICONV_VERSION=$(awk -F'"' '/LIBICONV_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          LIBXML2_VERSION=$(awk -F'"' '/LIBXML2_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          LIBXSLT_VERSION=$(awk -F'"' '/LIBXSLT_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          echo "ZLIB_VERSION=${ZLIB_VERSION}" >> $GITHUB_ENV
+          echo "LIBICONV_VERSION=${LIBICONV_VERSION}" >> $GITHUB_ENV
+          echo "LIBXML2_VERSION=${LIBXML2_VERSION}" >> $GITHUB_ENV
+          echo "LIBXSLT_VERSION=${LIBXSLT_VERSION}" >> $GITHUB_ENV
+
+          sed -i 's/riscv64/loongarch64/g' pyproject.toml
+
+      - name: Download latest libraries
+        if: env.BUILD != 'false'
+        env:
+          GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python3 buildlibxml.py --download-only
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
