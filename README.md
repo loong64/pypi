@@ -69,7 +69,6 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | httptools            | `pip install httptools --extra-index-url https://mirrors.loong64.com/pypi/simple`            |
 | igraph               | `pip install igraph --extra-index-url https://mirrors.loong64.com/pypi/simple`               |
 | ijson                | `pip install ijson --extra-index-url https://mirrors.loong64.com/pypi/simple`                |
-| insightface          | `pip install insightface --extra-index-url https://mirrors.loong64.com/pypi/simple`          |
 | jiter                | `pip install jiter --extra-index-url https://mirrors.loong64.com/pypi/simple`                |
 | jpype1               | `pip install jpype1 --extra-index-url https://mirrors.loong64.com/pypi/simple`               |
 | jsonschema-rs        | `pip install jsonschema-rs --extra-index-url https://mirrors.loong64.com/pypi/simple`        |
