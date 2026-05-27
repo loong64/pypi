@@ -69,20 +69,32 @@ jobs:
         if: env.BUILD != 'false'
         run: uv sync --no-install-project
 
+      - name: Cache parsers
+        if: env.BUILD != 'false'
+        uses: actions/cache@v5
+        with:
+          path: parsers
+          key: parsers-${{ hashFiles('sources/language_definitions.json') }}
+          restore-keys: |
+            parsers-
+
       - name: Clone vendors
         if: env.BUILD != 'false'
         run: |
           mkdir -p parsers
-          uv run --no-sync scripts/clone_vendors.py
+          until uv run --script scripts/clone_vendors.py; do
+            sleep 10
+          done
           rm -rf .venv
 
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
         with:
+          working-directory: packages/python
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist --manifest-path crates/ts-pack-python/Cargo.toml
+          args: --release --out ../../dist
 
       - name: Check wheel
         run: |
