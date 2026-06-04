@@ -82,9 +82,13 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           mkdir -p parsers
-          until uv run --script scripts/clone_vendors.py; do
-            sleep 10
-          done
+          if ! grep -q "max_attempts =" scripts/clone_vendors.py; then
+            rm -f scripts/clone_vendors.py
+            wget -O scripts/clone_vendors.py https://github.com/kreuzberg-dev/tree-sitter-language-pack/raw/refs/heads/main/scripts/clone_vendors.py
+          fi
+          sed -i 's@max_attempts = 3@max_attempts = 20@g' scripts/clone_vendors.py
+          sed -i 's@delay = backoff_delays.*@delay = 30@g' scripts/clone_vendors.py
+          uv run --script scripts/clone_vendors.py
           rm -rf .venv
 
       - name: Build wheels
