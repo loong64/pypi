@@ -54,7 +54,7 @@ jobs:
             exit 0
           fi
 
-          echo "VERSION=${version}" >> $GITHUB_ENV
+          echo "VERSION=v${version}" >> $GITHUB_ENV
 
       - name: Checkout
         if: env.BUILD != 'false'
@@ -95,7 +95,9 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux }}
           working-directory: hf_xet
           before-script-linux: |
-            apt-get update && apt-get install libatomic-ops-dev -y
+            if command -v apt-get &> /dev/null; then
+              apt-get update && apt-get install libatomic-ops-dev -y
+            fi
             git config --global --add safe.directory "*"
 
       - name: Strip debug symbols into a separate file
