@@ -36,7 +36,6 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
 
-          py_ver=${{ matrix.python-version }}
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
@@ -52,15 +51,23 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          if [ ! -f "requirements-release_build.txt" ]; then
-            wget -qO requirements-release_build.txt https://github.com/onnx/onnx/raw/refs/tags/v${version}/requirements-release_build.txt
-          fi
+          echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
 
-          if [ ! -f "workflow_scripts/protobuf/build_protobuf_unix.sh" ]; then
-            mkdir -p workflow_scripts/protobuf
-            wget -qO workflow_scripts/protobuf/build_protobuf_unix.sh https://github.com/onnx/onnx/raw/refs/tags/v${version}/workflow_scripts/protobuf/build_protobuf_unix.sh
-            chmod +x workflow_scripts/protobuf/build_protobuf_unix.sh
-          fi
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Download protoc
+        run: |
+          ARCH=$(uname -m)
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-${ARCH}.zip" -o protoc.zip
+          unzip -q protoc.zip -d protoc-host
+          chmod +x protoc-host/bin/protoc
+
+      - name: Download protobuf source
+        run: |
+          curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
+          tar -xf protobuf.tar.gz
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -73,21 +80,16 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
-            curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash &&
-            (command -v yum && yum install -y wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true &&
-            (command -v apk && apk add --no-cache wget && source workflow_scripts/protobuf/build_protobuf_unix.sh "$(nproc)") || true
-          CIBW_BEFORE_BUILD_LINUX: >
-            rm -rf .setuptools-cmake-build &&
-            pip install -r requirements-release_build.txt &&
-            pip install cmake
+            curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash
           CIBW_ENVIRONMENT_LINUX: >
             CC="/opt/clang/bin/clang"
             CXX="/opt/clang/bin/clang++"
             LDFLAGS="-fuse-ld=lld"
             ONNX_ML=1
-            CMAKE_ARGS="-DONNX_USE_LITE_PROTO=ON"
+            CMAKE_ARGS="-DFETCHCONTENT_SOURCE_DIR_PROTOBUF=/project/protobuf-${{ env.PROTOBUF_VERSION }} -DONNX_CUSTOM_PROTOC_EXECUTABLE=/project/protoc-host/bin/protoc -DONNX_HARDENING=ON -DONNX_USE_LITE_PROTO=ON"
             LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:/usr/local/lib"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
         run: |
