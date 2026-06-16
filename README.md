@@ -27,6 +27,7 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | aiohttp              | `pip install aiohttp --extra-index-url https://mirrors.loong64.com/pypi/simple`              |
 | argon2-cffi-bindings | `pip install argon2-cffi-bindings --extra-index-url https://mirrors.loong64.com/pypi/simple` |
 | apache-tvm-ffi       | `pip install apache-tvm-ffi --extra-index-url https://mirrors.loong64.com/pypi/simple`       |
+| ast-serialize        | `pip install ast-serialize --extra-index-url https://mirrors.loong64.com/pypi/simple`        |
 | asyncpg              | `pip install asyncpg --extra-index-url https://mirrors.loong64.com/pypi/simple`              |
 | audioop-lts          | `pip install audioop-lts --extra-index-url https://mirrors.loong64.com/pypi/simple`          |
 | av                   | `pip install av --extra-index-url https://mirrors.loong64.com/pypi/simple`                   |
