@@ -54,10 +54,12 @@ jobs:
           echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
 
       - uses: actions/setup-python@v6
+        if: env.BUILD != 'false'
         with:
           python-version: "3.12"
 
       - name: Download protoc
+        if: env.BUILD != 'false'
         run: |
           ARCH=$(uname -m)
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protoc-${PROTOBUF_VERSION}-linux-${ARCH}.zip" -o protoc.zip
@@ -65,6 +67,7 @@ jobs:
           chmod +x protoc-host/bin/protoc
 
       - name: Download protobuf source
+        if: env.BUILD != 'false'
         run: |
           curl -sSL "https://github.com/protocolbuffers/protobuf/releases/download/v${PROTOBUF_VERSION}/protobuf-${PROTOBUF_VERSION}.tar.gz" -o protobuf.tar.gz
           tar -xf protobuf.tar.gz
