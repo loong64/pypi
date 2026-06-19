@@ -66,6 +66,7 @@ jobs:
         uses: docker/setup-qemu-action@v4
 
       - name: Prepare build
+        if: env.BUILD != 'false'
         run: |
           wget -qO - https://github.com/loong64/greenlet/commit/253fa2c7020e8a9da9ae8b75510f1b5b05637e40.patch | patch -p1
 
