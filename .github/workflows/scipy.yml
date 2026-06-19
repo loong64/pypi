@@ -20,7 +20,7 @@ jobs:
       matrix:
         arch: [ 'loongarch64' ]
         build: [ 'manylinux_', 'musllinux_' ]
-        python: [ 'cp311', 'cp312', 'cp313', 'cp314', 'cp314t' ]
+        python: [ 'cp312', 'cp313', 'cp314', 'cp314t' ]
     steps:
       - name: Get Source Code
         run: |
@@ -66,7 +66,7 @@ jobs:
           CIBW_ENVIRONMENT_LINUX: >
             CC="/opt/clang/bin/clang"
             CXX="/opt/clang/bin/clang++"
-            PKG_CONFIG_PATH="/project/"
+            PKG_CONFIG_PATH="/project/.openblas"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
 
