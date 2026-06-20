@@ -13,14 +13,13 @@ on:
 
 jobs:
   build_wheels:
-    name: Build ${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }} wheels
+    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         arch: [ 'loongarch64' ]
         build: [ 'manylinux_', 'musllinux_' ]
-        python: [ 'cp312', 'cp313', 'cp314', 'cp314t' ]
     steps:
       - name: Get Source Code
         run: |
@@ -60,7 +59,7 @@ jobs:
         uses: loong64/cibuildwheel@v3.4.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "${{ matrix.python }}-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
             curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash
           CIBW_ENVIRONMENT_LINUX: >
