@@ -48,7 +48,7 @@ jobs:
       - uses: actions/checkout@v6
         if: env.BUILD != 'false'
         with:
-          repository: faiss-wheels/faiss-wheels
+          repository: facebookresearch/faiss
           ref: ${{ env.VERSION }}
           submodules: recursive
 
@@ -62,8 +62,6 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_LINUX: >
-            FAISS_OPT_LEVEL=generic
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
 
