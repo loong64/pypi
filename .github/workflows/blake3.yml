@@ -64,6 +64,16 @@ jobs:
           args: --release --out dist --interpreter '3.8 3.9 3.10 3.11 3.12 3.13 3.14'
           rust-toolchain: stable
           docker-options: -e CI
+
+      - name: Build free-threading wheels
+        if: env.BUILD != 'false'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --interpreter '3.14t'
+          rust-toolchain: stable
+          docker-options: -e CI
       
       - name: Check wheel
         run: |
