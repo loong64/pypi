@@ -63,11 +63,18 @@ jobs:
 
       - name: Install uv
         if: env.BUILD != 'false'
-        uses: astral-sh/setup-uv@v7
+        uses: astral-sh/setup-uv@v8.2.0
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.14"
 
       - name: Install dependencies
         if: env.BUILD != 'false'
-        run: uv sync --no-install-project
+        run: uv sync --no-install-project --no-install-workspace
 
       - name: Cache parsers
         if: env.BUILD != 'false'
