@@ -70,7 +70,7 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release -m crates/jsonschema-py/Cargo.toml --out dist --interpreter 3.13t 3.14t
+          args: --release -m crates/jsonschema-py/Cargo.toml --out dist --interpreter 3.14t
 
       - name: Check wheel
         run: |
