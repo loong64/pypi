@@ -51,35 +51,17 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          mkdir -p scripts
-          cd scripts
-          if [ ! -f "cibw_before_all.sh" ]; then
-            wget -q https://github.com/aleaxit/gmpy/raw/refs/tags/v2.2.1/scripts/cibw_before_all.sh
-          fi
-          if [ ! -f "cibw_repair_wheel_command.sh" ]; then
-            wget -q https://github.com/aleaxit/gmpy/raw/refs/tags/v2.2.1/scripts/cibw_repair_wheel_command.sh
-          fi
-          if [ ! -f "fat_build_fix.diff" ]; then
-            wget -q https://github.com/aleaxit/gmpy/raw/refs/tags/v2.2.1/scripts/fat_build_fix.diff
-          fi
-          if [ ! -f "mp_bitcnt_t.diff" ]; then
-            wget -q https://github.com/aleaxit/gmpy/raw/refs/tags/v2.2.1/scripts/mp_bitcnt_t.diff
-          fi
-
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v4
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v3.4.1
+        uses: loong64/cibuildwheel@v4.1.0
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_ALL: bash scripts/cibw_before_all.sh
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
-          CIBW_REPAIR_WHEEL_COMMAND: >
-            bash scripts/cibw_repair_wheel_command.sh {dest_dir} {wheel}
 
       - name: Check wheel
         run: |
