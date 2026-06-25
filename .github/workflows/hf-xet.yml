@@ -30,7 +30,6 @@ jobs:
             manylinux: "musllinux_1_2"
         python-version:
           - 3.14
-          - 3.13t
           - 3.14t
 
     steps:
