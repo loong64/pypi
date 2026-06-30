@@ -61,7 +61,8 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           wget -qO - https://github.com/loong64/playwright/raw/refs/heads/main/loong64.patch | git apply
-          sed -i "s/^driver_version = .*/driver_version = \"${APP_VERSION}\"/g" setup.py
+          DRIVER_VERSION=$(cat DRIVER_VERSION | awk -F'-' '{print $1}')
+          echo "${DRIVER_VERSION}" > DRIVER_VERSION
           rm -rf .git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -69,6 +70,11 @@ jobs:
           git add .
           git commit -m "feat: Release ${{ env.VERSION }}"
           git tag ${{ env.VERSION }}
+
+          # DRIVER_VERSION=$(cat DRIVER_VERSION | awk -F'-' '{print $1}')
+          # mkdir -p driver
+          # cd driver
+          # wget -q https://github.com/loong64/playwright/releases/download/v${DRIVER_VERSION}/playwright-${DRIVER_VERSION}-linux-loong64.zip
 
       - name: Build wheels
         if: env.BUILD != 'false'
