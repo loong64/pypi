@@ -11,6 +11,10 @@ on:
   schedule:
     - cron: '0 15 * * *'
 
+env:
+  EXPECTED_DISTS: 87
+  FORCE_COLOR: 1
+
 jobs:
   build_wheels:
     name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
@@ -86,8 +90,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENABLE: "cpython-freethreading"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH FORCE_COLOR
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
