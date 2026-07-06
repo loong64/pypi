@@ -71,7 +71,7 @@ jobs:
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           # CIBW_BUILD_VERBOSITY: 1
           CIBW_BEFORE_ALL_LINUX: >
-            curl -sSL https://github.com/loong64/static-clang-build/raw/refs/heads/main/manylinux-install-static-clang.sh | bash &&
+            manylinux-install-clang &&
             yum install -y ccache
           CIBW_BEFORE_BUILD: >
             pip install https://github.com/loong64/auditwheel/releases/download/6.2.0/auditwheel-6.2.0-py3-none-any.whl
