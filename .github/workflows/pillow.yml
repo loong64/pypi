@@ -74,9 +74,9 @@ jobs:
         run: |
           set -ex
           if [ "${{ matrix.arch }}" = "loongarch64" ]; then
-            wget -qO - https://github.com/loong64/Pillow/commit/54044c2683c72e252df33c69079083749b20aecc.patch | git apply
+            wget -qO - https://github.com/loong64/Pillow/commit/362584658b17c1253dc202e81eeb0b3e9aa156b4.patch | git apply --whitespace=fix
             cd wheels/multibuild
-            wget -qO - https://github.com/loong64/multibuild/commit/71cdfa9f99d1c373fbbb4bac5e7471fbe5f4eca1.patch | git apply
+            wget -qO - https://github.com/loong64/multibuild/commit/d6bb4f3350a966291d0acb7491060ef283c05ae2.patch | git apply
             git diff
           fi
 
