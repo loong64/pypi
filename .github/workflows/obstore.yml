@@ -61,7 +61,7 @@ jobs:
         with:
           target: "${{ matrix.platform.target }}"
           args: --release --out dist --features abi3-py311 -i 3.11 --manifest-path obstore/Cargo.toml
-          sccache: true
+          sccache: "true"
           manylinux: ${{ matrix.platform.manylinux }}
 
       - name: Build version-specific wheels

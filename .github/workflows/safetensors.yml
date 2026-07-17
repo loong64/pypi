@@ -67,7 +67,16 @@ jobs:
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist --manifest-path bindings/python/Cargo.toml
+          args: --release --out dist --manifest-path bindings/python/Cargo.toml --locked --interpreter 3.14
+          sccache: 'true'
+
+      - name: Build python 3.14t
+        if: env.BUILD != 'false'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist --manifest-path bindings/python/Cargo.toml --locked --interpreter 3.14t
           sccache: 'true'
 
       - name: Check wheel
