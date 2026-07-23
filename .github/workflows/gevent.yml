@@ -9,7 +9,7 @@ on:
         type: string
         required: true
   schedule:
-    - cron: '0 17 * * *'
+    - cron: '0 18 * * *'
 
 jobs:
   build_wheels:
@@ -56,14 +56,42 @@ jobs:
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v4
 
+      - name: Cache ~/.ccache
+        uses: actions/cache@v6
+        with:
+          path: ~/.ccache/**
+          key: ${{ runner.os }}-gevent-ccache_${{ matrix.image }}
+
       - name: Build and test gevent
         if: env.BUILD != 'false'
         env:
           DOCKER_IMAGE: ghcr.io/loong64/${{ matrix.image }}
           GEVENT_MANYLINUX_NAME: ${{ matrix.image }}
-          GEVENTTEST_SKIP_ALL: 1
+          PIP_UPGRADE_STRATEGY: eager
+          # Higher values like 2 definitely cause test breakage, as we
+          # can't stop a libev watcher if the FD has been closed (which is
+          # a silly design decision)
+          GEVENTSETUP_EV_VERIFY: 1
+          # Disable some warnings produced by libev especially and also some Cython generated code.
+          # These are shared between GCC and clang so it must be a minimal set.
+          # TODO: Figure out how to set env vars per platform without resorting to inline scripting.
+          # Note that changing the value of these variables invalidates configure caches
+          CFLAGS: -O3 -pipe -Wno-strict-aliasing -Wno-comment
+          CPPFLAGS: -DEV_VERIFY=1
+          ###
+          # caching
+          ###
+          # CCACHE_DIR: ~/.ccache # Using ~ here makes it not find its cache.
+          CC: "ccache gcc"
+          CCACHE_NOCPP2: true
+          CCACHE_SLOPPINESS: file_macro,time_macros,include_file_ctime,include_file_mtime
+          CCACHE_NOHASHDIR: true
         run: |
           sed -i 's@GEVENT_MANYLINUX_NAME@PIP_EXTRA_INDEX_URL -e GEVENT_MANYLINUX_NAME@g' scripts/releases/make-manylinux
+          # Disable python-3.15 build
+          # https://github.com/gevent/gevent/pull/2190
+          sed -i 's/ --no-binary :all://g' scripts/releases/make-manylinux
+          sed -i 's/315,314,/314,/g' scripts/releases/make-manylinux
           scripts/releases/make-manylinux
 
       - name: Check wheel
