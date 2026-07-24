@@ -62,7 +62,7 @@ jobs:
         with:
           target: "${{ matrix.platform.target }}"
           args: --release --out dist
-          manylinux: auto
+          manylinux: ${{ matrix.platform.manylinux }}
           working-directory: pyrefly
         env:
           JEMALLOC_SYS_WITH_LG_PAGE: 16

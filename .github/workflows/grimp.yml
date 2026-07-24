@@ -62,7 +62,7 @@ jobs:
           target: "${{ matrix.platform.target }}"
           args: --release -o dist --find-interpreter
           sccache: 'true'
-          manylinux: auto
+          manylinux: ${{ matrix.platform.manylinux }}
 
       - name: Check wheel
         run: |
