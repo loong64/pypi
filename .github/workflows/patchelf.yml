@@ -36,7 +36,7 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-
+          echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${package}-${version}-.*_${{ matrix.arch }}.whl"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
@@ -77,11 +77,11 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.1.0
+        uses: loong64/cibuildwheel@v4.1.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_CONFIG_SETTINGS: "cmake.define.RUN_PATCHELF_TEST=OFF"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
           CIBW_MUSLLINUX_LOONGARCH64_IMAGE: patchelf_build_${{ matrix.arch }}
 

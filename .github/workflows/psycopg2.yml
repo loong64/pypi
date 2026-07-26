@@ -41,7 +41,7 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-
+          echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           case $package in
             psycopg2)
               check_file="${package}-${version}-.*-${{ matrix.platform }}.*_${{ matrix.arch }}.whl"
@@ -83,7 +83,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.1.0
+        uses: loong64/cibuildwheel@v4.1.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{matrix.platform}}_${{matrix.arch}}"
@@ -94,7 +94,7 @@ jobs:
           # CIBW_TEST_COMMAND: >
             # export PYTHONPATH={project} &&
             # python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH LIBPQ_VERSION OPENSSL_VERSION
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH LIBPQ_VERSION OPENSSL_VERSION
           CIBW_ENVIRONMENT: >
             PACKAGE_NAME=${{ matrix.package }}
             LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build

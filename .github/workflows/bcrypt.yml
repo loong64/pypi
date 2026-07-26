@@ -38,7 +38,7 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-
+          echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           case "${{ matrix.MANYLINUX.NAME }}" in
             manylinux_2_38_loongarch64)
               check_file="${package}-${version}-.*manylinux_2_38_loongarch64.whl"
@@ -82,12 +82,12 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.1.0
+        uses: loong64/cibuildwheel@v4.1.1
         env:
           CIBW_BUILD_FRONTEND: "pip"
           CIBW_ENVIRONMENT_LINUX: >
             RUSTUP_HOME="/root/.rustup"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
 
       - name: Check wheel
         run: |

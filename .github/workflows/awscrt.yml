@@ -36,6 +36,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           if [ "${{ matrix.arch }}" = "loongarch64" ]; then
             echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+            echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           fi
 
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
@@ -63,7 +64,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel

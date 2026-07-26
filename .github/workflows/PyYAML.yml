@@ -38,7 +38,7 @@ jobs:
           fi
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-
+          echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           case "${{ matrix.MANYLINUX.NAME }}" in
             manylinux_2_38_loongarch64)
               check_file="pyyaml-${version}-.*manylinux_2_38_loongarch64.whl"
@@ -129,7 +129,7 @@ jobs:
         if: env.BUILD != 'false'
         env:
           # CIBW_BUILD_VERBOSITY: 1
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
           CIBW_ENVIRONMENT: >
             LD_LIBRARY_PATH=../libyaml/src/.libs
             PYYAML_FORCE_CYTHON=1
