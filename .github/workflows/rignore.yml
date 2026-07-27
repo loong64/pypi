@@ -53,11 +53,6 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-      - uses: actions/setup-python@v6
-        if: env.BUILD != 'false'
-        with:
-          python-version: ${{ matrix.python.version }}
-
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
