@@ -42,6 +42,8 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
+
           case $package in
             psycopg2)
               check_file="${package}-${version}-.*-${{ matrix.platform }}.*_${{ matrix.arch }}.whl"
@@ -94,7 +96,7 @@ jobs:
           # CIBW_TEST_COMMAND: >
             # export PYTHONPATH={project} &&
             # python -c "import tests; tests.unittest.main(defaultTest='tests.test_suite')"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH LIBPQ_VERSION OPENSSL_VERSION
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH LIBPQ_VERSION OPENSSL_VERSION
           CIBW_ENVIRONMENT: >
             PACKAGE_NAME=${{ matrix.package }}
             LIBPQ_BUILD_PREFIX=/host/tmp/libpq.build

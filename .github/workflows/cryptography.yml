@@ -47,6 +47,8 @@ jobs:
               echo "CIBW_MANYLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
               echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
+
               ;;
             musllinux_1_2_loongarch64)
               check_file="${package}-${version}-.*musllinux_1_2_loongarch64.whl"
@@ -55,6 +57,8 @@ jobs:
               echo "CIBW_MUSLLINUX_LOONGARCH64_IMAGE=ghcr.io/loong64/${{ matrix.MANYLINUX.CONTAINER }}" >> $GITHUB_ENV
               echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
               echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
+
               ;;
             *)
               echo "BUILD=false" >> $GITHUB_ENV
@@ -95,7 +99,7 @@ jobs:
             OPENSSL_DIR="/opt/pyca/cryptography/openssl"
             OPENSSL_STATIC=1
             RUSTUP_HOME="/root/.rustup"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
 
       - name: Check wheel
         run: |

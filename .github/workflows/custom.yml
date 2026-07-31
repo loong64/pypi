@@ -27,6 +27,7 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
 
           full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
           download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
@@ -44,7 +45,7 @@ jobs:
         env:
           CIBW_ARCHS: loongarch64
           CIBW_BUILD_VERBOSITY: 1
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
 
       - name: Check wheel
         run: |

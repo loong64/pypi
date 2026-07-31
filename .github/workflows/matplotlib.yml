@@ -36,6 +36,8 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
+
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
@@ -64,7 +66,7 @@ jobs:
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_BUILD: 
             rm -rf {package}/build
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
           CIBW_TEST_SKIP: "*-musllinux_loongarch64"
 
       - name: Check wheel

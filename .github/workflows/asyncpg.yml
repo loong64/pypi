@@ -36,6 +36,8 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
+
           check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
@@ -65,7 +67,7 @@ jobs:
             (command -v apk && apk add shadow postgresql postgresql-dev postgresql-contrib krb5 krb5-server krb5-dev) || true &&
             (command -v yum && yum -y install postgresql-server postgresql-devel postgresql-contrib krb5-server krb5-workstation krb5-libs krb5-devel) || true &&
             useradd -m -s /bin/bash apgtest
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel

@@ -36,6 +36,8 @@ jobs:
           echo "Building package: ${package} version: ${version}"
           echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
           echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
+          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
+
           # argon2_cffi_bindings-21.2.0-cp39-abi3-manylinux_2_36_loongarch64.manylinux_2_38_loongarch64.whl
           # argon2_cffi_bindings-21.2.0-cp39-abi3-musllinux_1_2_loongarch64.whl 
           check_file="argon2_cffi_bindings-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
@@ -64,7 +66,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
           CIBW_TEST_COMMAND: python -Ic "from _argon2_cffi_bindings import ffi, lib; print(lib.ARGON2_VERSION_NUMBER)"
 
       - name: Check wheel
