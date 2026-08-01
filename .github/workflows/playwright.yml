@@ -62,7 +62,7 @@ jobs:
       - name: Prepare build
         if: env.BUILD != 'false'
         run: |
-          wget -qO - https://github.com/loong64/playwright/raw/refs/heads/main/loong64.patch | git apply
+          wget -qO - https://github.com/loong64/playwright-python/commit/989a6d9316c0ca46d1fd93d21210a5d570985b29.patch | git apply
           DRIVER_VERSION=$(cat DRIVER_VERSION | awk -F'-' '{print $1}')
           echo "${DRIVER_VERSION}" > DRIVER_VERSION
           rm -rf .git
