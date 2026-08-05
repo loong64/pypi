@@ -171,6 +171,7 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | statsmodels          | `pip install statsmodels --extra-index-url https://mirrors.loong64.com/pypi/simple`          |
 | stringzilla          | `pip install stringzilla --extra-index-url https://mirrors.loong64.com/pypi/simple`          |
 | swig                 | `pip install swig --extra-index-url https://mirrors.loong64.com/pypi/simple`                 |
+| tensorflow-cpu       | `pip install tensorflow-cpu --extra-index-url https://mirrors.loong64.com/pypi/simple`       |
 | thinc                | `pip install thinc --extra-index-url https://mirrors.loong64.com/pypi/simple`                |
 | tiktoken             | `pip install tiktoken --extra-index-url https://mirrors.loong64.com/pypi/simple`             |
 | tokenizers           | `pip install tokenizers --extra-index-url https://mirrors.loong64.com/pypi/simple`           |
