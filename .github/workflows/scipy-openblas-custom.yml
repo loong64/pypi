@@ -1,4 +1,4 @@
-name: build (scipy-openblas)
+name: build (scipy-openblas-custom)
 
 on:
   workflow_dispatch:
@@ -8,8 +8,14 @@ on:
         description: 'Package version'
         type: string
         required: true
-  schedule:
-    - cron: '0 10 * * *'
+      tag:
+        default: 'main'
+        description: 'openblas-libs branch or tag'
+        type: string
+        required: true
+
+  # schedule:
+    # - cron: '0 10 * * *'
 
 jobs:
   build:
@@ -68,7 +74,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: MacPython/openblas-libs
-          ref: ${{ env.APP_VERSION }}
+          ref: ${{ inputs.tag }}
           submodules: recursive
           fetch-depth: 0
 
