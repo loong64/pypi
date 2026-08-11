@@ -185,6 +185,7 @@ Built Packages on **[manylinux](https://github.com/loong64/manylinux)** and **[m
 | uuid-utils           | `pip install uuid-utils --extra-index-url https://mirrors.loong64.com/pypi/simple`           |
 | uv                   | `pip install uv --extra-index-url https://mirrors.loong64.com/pypi/simple`                   |
 | uvloop               | `pip install uvloop --extra-index-url https://mirrors.loong64.com/pypi/simple`               |
+| vllm                 | `pip install  vllm --extra-index-url https://mirrors.loong64.com/pypi/simple`                |
 | wandb                | `pip install wandb --extra-index-url https://mirrors.loong64.com/pypi/simple`                |
 | watchfiles           | `pip install watchfiles --extra-index-url https://mirrors.loong64.com/pypi/simple`           |
 | xgrammar             | `pip install xgrammar --extra-index-url https://mirrors.loong64.com/pypi/simple`             |
