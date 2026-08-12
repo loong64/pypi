@@ -90,8 +90,8 @@ jobs:
           sed -i 's@GEVENT_MANYLINUX_NAME@PIP_EXTRA_INDEX_URL -e GEVENT_MANYLINUX_NAME@g' scripts/releases/make-manylinux
           # Disable python-3.15 build
           # https://github.com/gevent/gevent/pull/2190
-          sed -i 's/ --no-binary :all://g' scripts/releases/make-manylinux
-          sed -i 's/315,314,/314,/g' scripts/releases/make-manylinux
+          # sed -i 's/ --no-binary :all://g' scripts/releases/make-manylinux
+          # sed -i 's/315,314,/314,/g' scripts/releases/make-manylinux
           scripts/releases/make-manylinux
 
       - name: Check wheel
