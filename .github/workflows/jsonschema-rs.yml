@@ -64,13 +64,21 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release -m crates/jsonschema-py/Cargo.toml --out dist --interpreter ${{ env.PYTHON_ABI_VERSION }}
 
-      - name: Build freethreaded wheels
+      - name: Build CPython 3.14t wheels
         if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release -m crates/jsonschema-py/Cargo.toml --out dist --interpreter 3.14t
+
+      - name: Build CPython 3.15t wheels
+        if: env.BUILD != 'false'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release -m crates/jsonschema-py/Cargo.toml --out dist --interpreter 3.15t
 
       - name: Check wheel
         run: |
