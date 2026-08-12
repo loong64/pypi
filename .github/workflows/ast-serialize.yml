@@ -56,7 +56,7 @@ jobs:
           repository: mypyc/ast_serialize
           ref: ${{ env.VERSION }}
 
-      - name: Build wheels
+      - name: Build abi3 wheel
         if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
         with:
@@ -64,13 +64,21 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release --out dist -i python3.14
 
-      - name: Build freethreaded wheels
+      - name: Build CPython 3.14t wheel
         if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release --out dist -i python3.14t
+
+      - name: Build CPython 3.15t wheel
+        if: env.BUILD != 'false'
+        uses: PyO3/maturin-action@v1
+        with:
+          target: ${{ matrix.platform.target }}
+          manylinux: ${{ matrix.platform.manylinux }}
+          args: --release --out dist -i python3.15t
 
       - name: Check wheel
         run: |
