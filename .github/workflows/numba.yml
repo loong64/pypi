@@ -25,7 +25,7 @@ jobs:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
         build: [ "manylinux_" ]
-        python-version: [ 'cp310', 'cp311', 'cp312', 'cp313', 'cp314' ]
+        python-version: [ 'cp310', 'cp311', 'cp312', 'cp313', 'cp314', 'cp314t' ]
     steps:
       - name: Get Source Code
         run: |
@@ -53,16 +53,15 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          if [ ! -d "buildscripts/github" ]; then
-            mkdir -p "buildscripts/github"
-            wget -qO buildscripts/github/build_wheel_linux.sh https://github.com/numba/numba/raw/refs/heads/main/buildscripts/github/build_wheel_linux.sh
-            wget -qO buildscripts/github/repair_wheel_linux.sh https://github.com/numba/numba/raw/refs/heads/main/buildscripts/github/repair_wheel_linux.sh
-          fi
+          mkdir -p "buildscripts/github"
           if [ ! -f "buildscripts/github/build_wheel_linux.sh" ]; then
             wget -qO buildscripts/github/build_wheel_linux.sh https://github.com/numba/numba/raw/refs/tags/${version}/buildscripts/github/build_wheel_linux.sh
           fi
           if [ ! -f "buildscripts/github/repair_wheel_linux.sh" ]; then
             wget -qO buildscripts/github/repair_wheel_linux.sh https://github.com/numba/numba/raw/refs/tags/${version}/buildscripts/github/repair_wheel_linux.sh
+          fi
+          if [ ! -f "buildscripts/github/test_wheel_contents.py" ]; then
+            wget -qO buildscripts/github/test_wheel_contents.py https://github.com/numba/numba/raw/refs/tags/${version}/buildscripts/github/test_wheel_contents.py
           fi
           chmod +x buildscripts/github/*.sh
 
@@ -74,7 +73,7 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           case ${{ matrix.python-version }} in
-            cp314)
+            cp314*)
               numpy_build=2.3.3
               ;;
             cp313)
@@ -86,7 +85,7 @@ jobs:
           esac
           python_tag=${{ matrix.python-version }}
           # Construct the expected Python executable path inside the container
-          PYTHON_EXECUTABLE="/opt/python/${python_tag}-${python_tag}/bin/python"
+          PYTHON_EXECUTABLE="/opt/python/${python_tag/t/}-${python_tag}/bin/python"
           echo "Using Python executable: $PYTHON_EXECUTABLE"
 
           # Prepare build environment
@@ -112,7 +111,7 @@ jobs:
         run: |
           python_tag=${{ matrix.python-version }}
           # Construct the expected Python executable path inside the container
-          PYTHON_EXECUTABLE="/opt/python/${python_tag}-${python_tag}/bin/python"
+          PYTHON_EXECUTABLE="/opt/python/${python_tag/t/}-${python_tag}/bin/python"
           echo "Using Python executable: $PYTHON_EXECUTABLE"
 
           # Run the repair script in Docker
