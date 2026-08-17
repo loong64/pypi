@@ -68,7 +68,7 @@ jobs:
           working-directory: ./bindings/python
           target: ${{ matrix.platform.target }}
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12'
+          args: --release --out dist --interpreter '3.7 3.8 3.9 3.10 3.11 3.12 3.13'
           rust-toolchain: stable
           sccache: false
           docker-options: -e CI
