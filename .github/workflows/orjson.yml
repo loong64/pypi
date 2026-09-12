@@ -29,11 +29,12 @@ jobs:
       fail-fast: false
       matrix:
         python: [
-          { interpreter: 'python3.14', abi: 'cp314-cp314', manylinux: 'manylinux_2_36', maturin-version: 'v1.11.5', publish: true },
-          { interpreter: 'python3.13', abi: 'cp313-cp313', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
-          { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
-          { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
-          { interpreter: 'python3.10', abi: 'cp310-cp310', manylinux: 'manylinux_2_36', maturin-version: 'v1.13.1', publish: true },
+          { interpreter: 'python3.15', abi: 'cp315-cp315', manylinux: 'manylinux_2_36', publish: true },
+          { interpreter: 'python3.14', abi: 'cp314-cp314', manylinux: 'manylinux_2_36', publish: true },
+          { interpreter: 'python3.13', abi: 'cp313-cp313', manylinux: 'manylinux_2_36', publish: true },
+          { interpreter: 'python3.12', abi: 'cp312-cp312', manylinux: 'manylinux_2_36', publish: true },
+          { interpreter: 'python3.11', abi: 'cp311-cp311', manylinux: 'manylinux_2_36', publish: true },
+          { interpreter: 'python3.10', abi: 'cp310-cp310', manylinux: 'manylinux_2_36', publish: true },
         ]
         target: [
           {
@@ -94,7 +95,6 @@ jobs:
           args: --release --strip --out=dist --features=${{ matrix.target.features }} -i ${{ matrix.python.interpreter }}
           container: "${{ matrix.target.image }}"
           manylinux: "${{ matrix.python.manylinux }}"
-          maturin-version: "${{ matrix.python.maturin-version }}"
           rust-toolchain: "${{ env.RUST_TOOLCHAIN }}"
           rustup-components: rust-src
           target: "${{ matrix.target.target }}"
