@@ -53,7 +53,8 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@v6
+        if: env.BUILD != 'false'
         with:
           python-version: '3.13'
 
@@ -74,6 +75,7 @@ jobs:
           args: --release --out dist --features abi3
 
       - uses: actions/setup-python@v6
+        if: env.BUILD != 'false'
         id: abi3t-python
         with:
           # abi3t is only available from 3.15+. If we don't specify this, maturin
@@ -83,6 +85,7 @@ jobs:
           allow-prereleases: true
 
       - name: Build abi3t wheel
+        if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}

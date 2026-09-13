@@ -56,6 +56,7 @@ jobs:
           ref: ${{ env.VERSION }}
 
       - uses: actions/setup-python@v6
+        if: env.BUILD != 'false'
         with:
           python-version: |
             3.10
