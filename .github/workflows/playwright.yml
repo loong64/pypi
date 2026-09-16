@@ -62,7 +62,7 @@ jobs:
       - name: Prepare build
         if: env.BUILD != 'false'
         run: |
-          wget -qO - https://github.com/loong64/playwright-python/commit/989a6d9316c0ca46d1fd93d21210a5d570985b29.patch | git apply
+          wget -qO - https://github.com/loong64/playwright-python/commit/18f478af462d850c2d08f222186f8057e3e7d523.patch | git apply
           DRIVER_VERSION=$(cat DRIVER_VERSION | awk -F'-' '{print $1}')
           echo "${DRIVER_VERSION}" > DRIVER_VERSION
           rm -rf .git
@@ -73,17 +73,17 @@ jobs:
           git commit -m "feat: Release ${{ env.VERSION }}"
           git tag ${{ env.VERSION }}
 
-          # DRIVER_VERSION=$(cat DRIVER_VERSION | awk -F'-' '{print $1}')
-          # mkdir -p driver
-          # cd driver
-          # wget -q https://github.com/loong64/playwright/releases/download/v${DRIVER_VERSION}/playwright-${DRIVER_VERSION}-linux-loong64.zip
-
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v4.1.1
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BEFORE_ALL_LINUX: >
+            mkdir -p /usr/local/node &&
+            curl -sSL https://github.com/loong64/node/releases/download/v24.21.0/node-v24.21.0-linux-loong64.tar.gz | tar -xzf - -C /usr/local/node --strip-components=1
+          CIBW_ENVIRONMENT_LINUX: >
+            PATH=$PATH:/usr/local/node/bin
           CIBW_REPAIR_WHEEL_COMMAND_LINUX: "cp -f {wheel} {dest_dir}"
 
       - name: Check wheel
