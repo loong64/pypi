@@ -56,7 +56,7 @@ jobs:
       - name: Prepare Build
         if: env.BUILD != 'false'
         run: |
-          sed -i 's/turbojpeg = { version = "1.2", optional = true }/turbojpeg = { version = "1.2", optional = true, default-features = false, features = ["cmake", "pkg-config"] }/g' crates/kornia-io/Cargo.toml
+          sed -i 's/turbojpeg = { version = "1.4", optional = true }/turbojpeg = { version = "1.4", optional = true, default-features = false, features = ["cmake", "pkg-config"] }/g' crates/kornia-io/Cargo.toml
 
       - name: Build wheels
         if: env.BUILD != 'false'
