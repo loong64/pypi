@@ -56,7 +56,7 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          wget -qO - https://github.com/loong64/vllm/commit/282e0ddc8631b83511ccb11af48f4d6430e78c13.patch | patch -p1
+          wget -qO - https://github.com/loong64/vllm/commit/0e429e85d2442fc59a99dd07214435df3ef1ec08.patch | patch -p1
           sed -i 's/or platform_machine == "ppc64le"/or platform_machine == "loongarch64" or platform_machine == "ppc64le"/g' requirements/cpu.txt
 
       - name: Setup QEMU
