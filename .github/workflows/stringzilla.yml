@@ -63,14 +63,16 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v2.23.3
+        uses: loong64/cibuildwheel@v4.2.0
         env:
           SZ_TARGET: ${{ matrix.package }}
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_LINUX: SZ_IS_QEMU_=1
+          CIBW_ENVIRONMENT_LINUX: > 
+            SZ_IS_QEMU_=1
+            SZ_TESTS_MULTIPLIER="0.05"
+            SZ_TARGET=stringzilla
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
-          CIBW_PROJECT_REQUIRES_PYTHON: ">=3.10"
           CIBW_TEST_SKIP: "*"
 
       - name: Check wheel
