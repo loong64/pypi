@@ -15,8 +15,9 @@ env:
   FORCE_COLOR: "1"
   ORJSON_BUILD_FREETHREADED: "1"
   PIP_DISABLE_PIP_VERSION_CHECK: "1"
-  RUST_TOOLCHAIN: "nightly-2026-05-01"
+  RUST_TOOLCHAIN: "nightly-2026-10-01"
   RUST_TOOLCHAIN_STABLE: "1.95"
+  RUSTUP_TERM_PROGRESS_WHEN: "never"
   UNSAFE_PYO3_BUILD_FREE_THREADED: "1"
   UNSAFE_PYO3_SKIP_VERSION_CHECK: "1"
   UV_LINK_MODE: "copy"
@@ -39,7 +40,7 @@ jobs:
           {
             arch: 'loongarch64',
             cflags: '-Os -fstrict-aliasing',
-            features: 'no_panic,optimize',
+            features: 'nightly',
             image: 'ghcr.io/rust-cross/manylinux_2_36-cross:loongarch64',
             runner: "ubuntu-24.04",
             rustflags: '-Z unstable-options -C panic=immediate-abort -Z mir-opt-level=4 -D warnings',
