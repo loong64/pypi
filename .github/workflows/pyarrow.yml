@@ -82,6 +82,8 @@ jobs:
             ci/scripts/cpp_build.sh $(pwd) $(pwd)/build
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
           CIBW_ENVIRONMENT: >
+            simdjson_SOURCE=BUNDLED
+            xsimd_SOURCE=BUNDLED
             ARROW_HOME=/tmp/local
             ARROW_USE_CCACHE=ON
             ARROW_BUILD_TYPE=release
