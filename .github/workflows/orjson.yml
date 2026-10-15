@@ -98,6 +98,23 @@ jobs:
           rust-toolchain: "${{ env.RUST_TOOLCHAIN }}"
           rustup-components: rust-src
           target: "${{ matrix.target.target }}"
+          before-script-linux: |
+            python3 - <<'PY'
+            import json
+            path = "/opt/python/cp314-cp314/lib/python3.14/build-details.json"
+            suffix = ".cpython-314-loongarch64-linux-gnu.so"
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault("abi", {})["extension_suffix"] = suffix
+            data["abi"]["stable_abi_suffix"] = ".abi3.so"
+            data["suffixes"]["extensions"] = [
+                suffix,
+                ".abi3.so",
+                ".so",
+            ]
+            with open(path, "w") as f:
+                json.dump(data, f, indent=2)
+            PY
 
       - name: Check wheel
         run: |
