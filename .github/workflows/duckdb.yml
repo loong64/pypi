@@ -54,8 +54,8 @@ jobs:
 
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          cd external/duckdb
-          wget -qO - https://github.com/loong64/duckdb/raw/refs/heads/main/patch_loong64.patch | patch -p1
+          # cd external/duckdb
+          # wget -qO - https://github.com/loong64/duckdb/raw/refs/heads/main/patch_loong64.patch | patch -p1
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
