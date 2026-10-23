@@ -20,7 +20,8 @@ jobs:
       matrix:
         os: [ 'ubuntu-24.04' ]
         arch: [ 'loongarch64' ]
-        build: [ "manylinux_", "musllinux_" ]
+        build: [ "manylinux_" ]
+        # build: [ "manylinux_", "musllinux_" ]
     steps:
       - name: Get Source Code
         run: |
@@ -46,16 +47,23 @@ jobs:
           fi
 
           echo "VERSION=v${version}" >> $GITHUB_ENV
+          echo "OVERRIDE_GIT_DESCRIBE=v${version}" >> $GITHUB_ENV
       
       - uses: actions/checkout@v6
         if: env.BUILD != 'false'
         with:
           repository: duckdb/duckdb-python
           ref: ${{ env.VERSION }}
+          fetch-depth: 0
+          submodules: true
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v4
+
+      - name: Install uv
+        if: env.BUILD != 'false'
+        uses: astral-sh/setup-uv@v9.0.0
 
       - name: Build wheels
         if: env.BUILD != 'false'
@@ -63,7 +71,7 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
+          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH OVERRIDE_GIT_DESCRIBE
           CIBW_SKIP: "cp31?t-*"
 
       - name: Check wheel
