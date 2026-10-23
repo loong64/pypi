@@ -75,7 +75,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.1.1
+        uses: loong64/cibuildwheel@v4.3.3
         with:
           package-dir: binary/
         env:
