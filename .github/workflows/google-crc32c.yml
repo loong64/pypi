@@ -61,7 +61,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.2.0
+        uses: loong64/cibuildwheel@v4.3.3
         with:
           package-dir: packages/google-crc32c
         env:
