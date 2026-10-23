@@ -45,17 +45,13 @@ jobs:
             exit 0
           fi
 
-          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
-          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
-          if [ -z "$download_url" ]; then
-              echo "No source found for package ${package} version ${version}"
-              exit 1
-          fi
-
-          wget -O - "$download_url" | tar xz --strip-components=1
-
-          # cd external/duckdb
-          # wget -qO - https://github.com/loong64/duckdb/raw/refs/heads/main/patch_loong64.patch | patch -p1
+          echo "VERSION=v${version}" >> $GITHUB_ENV
+      
+      - uses: actions/checkout@v6
+        if: env.BUILD != 'false'
+        with:
+          repository: duckdb/duckdb-python
+          ref: ${{ env.VERSION }}
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
@@ -67,7 +63,6 @@ jobs:
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BUILD_FRONTEND: "build[uv]"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
           CIBW_SKIP: "cp31?t-*"
 
