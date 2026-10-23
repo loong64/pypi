@@ -67,14 +67,12 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           git apply ../../normalize-package-name.patch
-          if [ "${VERSION}" = "v1.2.0" ]; then
-            wget -qO - https://github.com/google/brotli/commit/e230f474b87134e8c6c85b630084c612057f253e.patch | git apply
-          fi
+          wget -qO - https://github.com/google/brotli/commit/e230f474b87134e8c6c85b630084c612057f253e.patch | git apply
         working-directory: ${{ env.PACKAGE_DIR }}
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.1.1
+        uses: loong64/cibuildwheel@v4.3.3
         with:
           package-dir: ${{ env.PACKAGE_DIR }}
         env:
