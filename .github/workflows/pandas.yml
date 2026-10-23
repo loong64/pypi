@@ -53,16 +53,6 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          # sed -i 's@free-threaded-support = true@# free-threaded-support = true@g' pyproject.toml
-          case "${{ matrix.build }}" in
-            manylinux_)
-              echo 'yum -y install ccache' >> scripts/cibw_before_build.sh
-              ;;
-            musllinux_)
-              echo 'apk add ccache' >> scripts/cibw_before_build.sh
-              ;;
-          esac
-
       - name: Setup QEMU
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v4
