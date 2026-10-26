@@ -46,14 +46,13 @@ jobs:
             exit 0
           fi
 
-          echo "VERSION=v${version}" >> $GITHUB_ENV
-
-      - name: Checkout
-        if: env.BUILD != 'false'
-        uses: actions/checkout@v6
-        with:
-          repository: python-grimp/grimp
-          ref: ${{ env.VERSION }}
+          full_json=$(curl -sSL "https://pypi.org/pypi/${package}/${version}/json")
+          download_url=$(echo "$full_json" | jq -r '.urls[] | select(.packagetype=="sdist").url')
+          if [ -z "$download_url" ]; then
+              echo "No source found for package ${package} version ${version}"
+              exit 1
+          fi
+          wget -O - "$download_url" | tar xz --strip-components=1
 
       - name: Build wheels
         if: env.BUILD != 'false'
