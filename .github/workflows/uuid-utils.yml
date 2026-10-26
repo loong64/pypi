@@ -62,15 +62,16 @@ jobs:
         if: env.BUILD != 'false'
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: "3.x"
 
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: PyO3/maturin-action@v1
         with:
           target: ${{ matrix.platform.target }}
+          args: --release --out dist -i 3.10 3.14t 3.15t
+          sccache: "true"
           manylinux: ${{ matrix.platform.manylinux }}
-          args: --release --out dist -i 3.9 3.10 3.11 3.12 3.13
 
       - name: Check wheel
         run: |
