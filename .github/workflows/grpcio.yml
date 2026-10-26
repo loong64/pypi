@@ -55,7 +55,7 @@ jobs:
           wget -O - "$download_url" | tar xz --strip-components=1
 
           cd third_party/boringssl-with-bazel
-          wget -O - https://github.com/loong64/boringssl/commit/6a809aa564245c3c306969196b1faa7ecee45d41.patch | patch -p1
+          wget -O - https://github.com/loong64/boringssl/commit/ea5f841af7a0cdee6151df16df2f49b9bba69deb.patch | patch -p1
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
