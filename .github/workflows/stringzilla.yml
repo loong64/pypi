@@ -63,7 +63,7 @@ jobs:
 
       - name: Build wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.3.3
+        uses: loong64/cibuildwheel@v4.3.5
         env:
           SZ_TARGET: ${{ matrix.package }}
           CIBW_ARCHS: "${{ matrix.arch }}"
