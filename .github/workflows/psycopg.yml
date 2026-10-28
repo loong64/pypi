@@ -12,8 +12,8 @@ on:
     - cron: '0 15 * * *'
 
 env:
-  LIBPQ_VERSION: "18.0"
-  OPENSSL_VERSION: "3.5.4"
+  LIBPQ_VERSION: "18.6"
+  OPENSSL_VERSION: "3.5.8"
   PQ_FLAGS: "-gssencmode-disable"
 
 jobs:
@@ -50,7 +50,7 @@ jobs:
             exit 0
           fi
           echo "VERSION=${version}" >> $GITHUB_ENV
-        
+
       - name: checkout
         if: env.BUILD != 'false'
         uses: actions/checkout@v6

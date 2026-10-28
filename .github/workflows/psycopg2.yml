@@ -13,8 +13,8 @@ on:
 
 env:
   PIP_BREAK_SYSTEM_PACKAGES: "1"
-  LIBPQ_VERSION: "17.9"
-  OPENSSL_VERSION: "3.5.6"
+  LIBPQ_VERSION: "17.11"
+  OPENSSL_VERSION: "3.5.8"
   PQ_FLAGS: ""
 
 jobs:
@@ -59,7 +59,7 @@ jobs:
           fi
 
           echo "VERSION=${version}" >> $GITHUB_ENV
-        
+
       - name: checkout
         if: env.BUILD != 'false'
         uses: actions/checkout@v6
