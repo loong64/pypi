@@ -55,30 +55,20 @@ jobs:
 
       - name: Setup Node
         if: env.BUILD != 'false'
-        uses: actions/setup-node@v6
-
-      - name: Install tree-sitter CLI
-        if: env.BUILD != 'false'
-        run: npm install -g tree-sitter-cli
-
-      - name: Install uv
-        if: env.BUILD != 'false'
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: xberg-io/actions/setup-mise@v1
         with:
-          enable-cache: true
+          install-args: node tree-sitter
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Setup Python environment
+        if: env.BUILD != 'false'
+        uses: xberg-io/actions/setup-python-env@v1
         with:
           python-version: "3.14"
-
-      - name: Install dependencies
-        if: env.BUILD != 'false'
-        run: uv sync --no-install-project --no-install-workspace
+          install-command: "uv sync --no-install-project --no-install-workspace"
 
       - name: Cache parsers
         if: env.BUILD != 'false'
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: parsers
           key: parsers-${{ hashFiles('sources/language_definitions.json') }}
@@ -89,8 +79,8 @@ jobs:
         if: env.BUILD != 'false'
         run: |
           mkdir -p parsers
-          uv run --script scripts/clone_vendors.py
-          rm -rf .venv
+          tree_sitter_cli=$(mise which tree-sitter)
+          PATH="$(dirname "$tree_sitter_cli"):$PATH" uv run --script scripts/clone_vendors.py
 
       - name: Build wheels
         if: env.BUILD != 'false'
