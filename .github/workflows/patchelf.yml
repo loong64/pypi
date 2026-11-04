@@ -53,7 +53,6 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          wget -qO - https://github.com/loong64/patchelf-pypi/commit/16ff28c98b39a941dc7458e1cdb5198997029544.patch | patch -p1
           sed -i 's/"cmake.define.RUN_PATCHELF_TEST" = "ON"/"cmake.define.RUN_PATCHELF_TEST" = "OFF"/g' pyproject.toml
 
       - name: Setup QEMU
@@ -80,6 +79,7 @@ jobs:
           fi
           WHEEL=$(find ./wheelhouse -name 'patchelf-*.whl')
           auditwheel show \${WHEEL}
+          pipx uninstall patchelf || true
           pipx install -f \${WHEEL}
           patchelf --version
           EOF
