@@ -53,8 +53,6 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-          sed -i 's@free-threaded-support = @# free-threaded-support = @g' pyproject.toml
-
           if [ "${{ matrix.build }}" = "musllinux_" ]; then
             cd native
             cargo update --package libc --precise 0.2.174
