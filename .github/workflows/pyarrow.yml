@@ -51,7 +51,7 @@ jobs:
 
       - name: checkout
         if: env.BUILD != 'false'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: apache/arrow
           ref: ${{ env.VERSION }}
@@ -63,7 +63,7 @@ jobs:
 
       - name: Cache arrow build
         if: env.BUILD != 'false'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: /tmp/cache/ccache
           key: ${{ env.VERSION }}-${{ matrix.platform }}-${{ matrix.arch }}

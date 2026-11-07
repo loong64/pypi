@@ -56,7 +56,7 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         if: env.BUILD != 'false'
         with:
           python-version: ${{ matrix.python.version }}

@@ -71,7 +71,7 @@ jobs:
 
       - name: Checkout Code
         if: env.BUILD != 'false'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: MacPython/openblas-libs
           ref: ${{ inputs.tag }}

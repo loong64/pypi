@@ -55,7 +55,7 @@ jobs:
 
           echo "PROTOBUF_VERSION=$(jq -r '.components[] | select(.name=="protobuf") | .version' sbom.cdx.json)" >> $GITHUB_ENV
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         if: env.BUILD != 'false'
         with:
           python-version: "3.12"

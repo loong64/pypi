@@ -49,7 +49,7 @@ jobs:
           echo "VERSION=v${version}" >> $GITHUB_ENV
           echo "OVERRIDE_GIT_DESCRIBE=v${version}" >> $GITHUB_ENV
       
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: env.BUILD != 'false'
         with:
           repository: duckdb/duckdb-python
@@ -63,7 +63,7 @@ jobs:
 
       - name: Install uv
         if: env.BUILD != 'false'
-        uses: astral-sh/setup-uv@v9.0.0
+        uses: astral-sh/setup-uv@v10.3.3
 
       - name: Build wheels
         if: env.BUILD != 'false'

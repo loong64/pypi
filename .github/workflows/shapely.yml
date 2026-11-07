@@ -74,11 +74,11 @@ jobs:
 
       - name: Set up Docker Buildx
         if: env.BUILD != 'false'
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Build Docker image with GEOS
         if: env.BUILD != 'false'
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           file: ci/Dockerfile
