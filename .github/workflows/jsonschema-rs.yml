@@ -50,7 +50,7 @@ jobs:
 
           echo "VERSION=python-v${version}" >> $GITHUB_ENV
       
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         if: env.BUILD != 'false'
         with:
           repository: Stranger6667/jsonschema

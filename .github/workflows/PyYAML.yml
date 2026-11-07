@@ -90,7 +90,7 @@ jobs:
       - name: Check cached libyaml state
         if: env.BUILD != 'false'
         id: cached_libyaml
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: libyaml
           key: libyaml_${{ env.LIBYAML_REF }}_${{ matrix.MANYLINUX.NAME }}

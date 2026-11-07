@@ -55,14 +55,14 @@ jobs:
 
       - name: Checkout
         if: env.BUILD != 'false'
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: dimastbk/python-calamine
           ref: ${{ env.VERSION }}
 
       - name: set up python
         if: env.BUILD != 'false'
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
           python-version: 3.14
 
