@@ -59,7 +59,7 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           target: "${{ matrix.platform.target }}"
-          args: --release -o dist --find-interpreter
+          args: --release -o dist --interpreter '3.11 3.12 3.13 3.14 3.14t 3.15 3.15t'
           sccache: 'true'
           manylinux: ${{ matrix.platform.manylinux }}
 
