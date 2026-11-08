@@ -75,6 +75,7 @@ jobs:
           args: --release --out dist --features abi3
 
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        if: env.BUILD != 'false'
         id: abi3t-python
         with:
           # abi3t is only available from 3.15+. If we don't specify this, maturin
@@ -82,6 +83,7 @@ jobs:
           python-version: '3.15'
 
       - name: Build abi3t wheel
+        if: env.BUILD != 'false'
         uses: PyO3/maturin-action@e83996d129638aa358a18fbd1dfb82f0b0fb5d3b # v1.51.0
         with:
           target: ${{ matrix.platform.target }}
