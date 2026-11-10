@@ -62,9 +62,11 @@ jobs:
       - name: Prepare build
         if: env.BUILD != 'false'
         run: |
-          wget -qO - https://github.com/loong64/playwright-python/commit/18f478af462d850c2d08f222186f8057e3e7d523.patch | git apply
-          DRIVER_VERSION=$(cat DRIVER_VERSION | awk -F'-' '{print $1}')
-          echo "${DRIVER_VERSION}" > DRIVER_VERSION
+          wget -qO - https://github.com/loong64/playwright-python/commit/1835e073ec856c89275cacd1d069cc5cf9e67022.patch | git apply
+          python3 scripts/upstream.py checkout
+          # DRIVER_VERSION=$(cat DRIVER_VERSION | awk -F'-' '{print $1}')
+          # echo "${DRIVER_VERSION}" > DRIVER_VERSION
+          rm -f .upstream/package-lock.json
           rm -rf .git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
@@ -80,6 +82,7 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
+            echo "@rolldown:registry=https://registry.loongnix.cn:5873/" > ~/.npmrc &&
             mkdir -p /usr/local/node &&
             curl -sSL https://github.com/loong64/node/releases/download/v24.21.0/node-v24.21.0-linux-loong64.tar.gz | tar -xzf - -C /usr/local/node --strip-components=1
           CIBW_ENVIRONMENT_LINUX: >
