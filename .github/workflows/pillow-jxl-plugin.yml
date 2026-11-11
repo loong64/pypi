@@ -53,14 +53,14 @@ jobs:
           fi
           wget -O - "$download_url" | tar xz --strip-components=1
 
-      - name: Prepare patched libjxl
-        if: env.BUILD != 'false'
-        run: |
-          git clone --filter=blob:none https://github.com/libjxl/libjxl.git libjxl
-          git -C libjxl checkout a7a9c787341cf703dede03c2009fa460cae5e5df
-          git -C libjxl submodule update --init --recursive
-          git -C libjxl/third_party/brotli fetch origin e230f474b87134e8c6c85b630084c612057f253e
-          git -C libjxl/third_party/brotli checkout e230f474b87134e8c6c85b630084c612057f253e
+      # - name: Prepare patched libjxl
+        # if: env.BUILD != 'false'
+        # run: |
+          # git clone --filter=blob:none https://github.com/libjxl/libjxl.git libjxl
+          # git -C libjxl checkout a7a9c787341cf703dede03c2009fa460cae5e5df
+          # git -C libjxl submodule update --init --recursive
+          # git -C libjxl/third_party/brotli fetch origin e230f474b87134e8c6c85b630084c612057f253e
+          # git -C libjxl/third_party/brotli checkout e230f474b87134e8c6c85b630084c612057f253e
 
       - uses: actions/setup-python@v7
         if: env.BUILD != 'false'
@@ -75,9 +75,9 @@ jobs:
           manylinux: ${{ matrix.platform.manylinux }}
           args: --release --out dist --interpreter 3.10 3.11 3.12 3.13 3.14 --features vendored
           sccache: 'true'
-          docker-options: >-
-            -v ${{ github.workspace }}/libjxl:/opt/libjxl:ro
-            -e DEP_JXL_PATH=/opt/libjxl
+          # docker-options: >-
+            # -v ${{ github.workspace }}/libjxl:/opt/libjxl:ro
+            # -e DEP_JXL_PATH=/opt/libjxl
       
       - name: Check wheel
         run: |
