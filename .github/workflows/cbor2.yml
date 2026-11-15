@@ -63,9 +63,11 @@ jobs:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
+            if command -v yum >/dev/null 2>&1; then yum install -y lld; fi &&
             curl -sSf https://sh.rustup.rs | sh -s -- -y
           CIBW_ENVIRONMENT_LINUX: >
             PATH="$HOME/.cargo/bin:$PATH"
+            RUSTFLAGS="-C link-arg=-fuse-ld=lld"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
 
       - name: Check wheel
