@@ -12,15 +12,19 @@ on:
     - cron: '0 17 * * *'
 
 jobs:
-  build_wheels:
-    name: Build ${{ matrix.build }}${{ matrix.arch }} wheels on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
+  cross_build_wheels:
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        os: [ 'ubuntu-24.04' ]
-        arch: [ 'loongarch64' ]
-        build: [ "manylinux_", "musllinux_" ]
+        platform:
+          - target: loongarch64-unknown-linux-gnu
+            arch: loongarch64
+            manylinux: 'manylinux_2_36'
+          - target: "loongarch64-unknown-linux-musl"
+            arch: loongarch64
+            manylinux: "musllinux_1_2"
+
     steps:
       - name: Get Source Code
         run: |
@@ -34,11 +38,8 @@ jobs:
             version=$(curl -sSL "https://pypi.org/pypi/${package}/json" | jq -r '.info.version')
           fi
           echo "Building package: ${package} version: ${version}"
-          echo "PIP_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-          echo "UV_EXTRA_INDEX_URL=https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple" >> $GITHUB_ENV
-          echo "UV_EXCLUDE_NEWER=false" >> $GITHUB_ENV
 
-          check_file="${package}-${version}-.*-${{ matrix.build }}.*_${{ matrix.arch }}.whl"
+          check_file="${package}-${version}-.*-${{ matrix.platform.manylinux }}_${{ matrix.platform.arch }}.whl"
           if curl "https://gitlab.com/api/v4/projects/65746188/packages/pypi/simple/${package//./-}" | grep -oP '(?<=>)[^<]+\.whl' | grep -q "${check_file}"; then
             echo "Package ${package} ${version} already exists"
             echo "BUILD=false" >> $GITHUB_ENV
@@ -54,36 +55,42 @@ jobs:
           repository: ngrok/ngrok-python
           ref: ${{ env.VERSION }}
 
-      - name: Setup QEMU
+      - name: Prepare build
         if: env.BUILD != 'false'
-        uses: docker/setup-qemu-action@v4
+        run: |
+          cat > .cargo/config.toml << 'EOF'
+          [env]
+          LIBCLANG_PATH = { value = "/usr/lib/llvm-22/lib", force = true }
+          CLANG_PATH = { value = "/usr/bin/clang-22", force = true }
+          BINDGEN_EXTRA_CLANG_ARGS_loongarch64_unknown_linux_gnu = { value = "-resource-dir=/usr/lib/llvm-22/lib/clang/22 --gcc-toolchain=/usr/loongarch64-unknown-linux-gnu --sysroot=/usr/loongarch64-unknown-linux-gnu/loongarch64-unknown-linux-gnu/sysroot", force = true }
+          BINDGEN_EXTRA_CLANG_ARGS_loongarch64_unknown_linux_musl = { value = "-resource-dir=/usr/lib/llvm-22/lib/clang/22 --gcc-toolchain=/usr/local/musl --sysroot=/usr/local/musl/loongarch64-unknown-linux-musl", force = true } 
+          EOF
 
-      - name: Build wheels
+      - name: Build abi3 wheels
         if: env.BUILD != 'false'
-        uses: loong64/cibuildwheel@v4.3.5
-        env:
-          CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_ALL_LINUX: >
-            (command -v apk && apk add llvm clang clang-dev) || true &&
-            (command -v yum && yum -y install llvm clang clang-devel) || true &&
-            curl -sSf https://sh.rustup.rs | sh -s -- -y
-          CIBW_ENVIRONMENT_LINUX: >
-            PATH="$HOME/.cargo/bin:$PATH"
-            RUSTFLAGS="-C link-arg=-fuse-ld=lld"
-          CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
-          CIBW_SKIP: "cp31?t-*"
+        uses: PyO3/maturin-action@v1
+        with:
+          target: "${{ matrix.platform.target }}"
+          args: --release -o dist -i python3.12
+          manylinux: ${{ matrix.platform.manylinux || 'auto' }}
+          before-script-linux: |
+            apt-get update
+            apt-get install -y wget lsb-release software-properties-common gnupg
+            wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
+            add-apt-repository -y "deb http://apt.llvm.org/jammy/ llvm-toolchain-jammy-22 main"
+            apt-get update
+            apt-get install -y libclang-22-dev clang-22
 
       - name: Check wheel
         run: |
-          ls -al wheelhouse/*.whl || exit 0
+          ls -al dist/*.whl || exit 0
           echo "upload=true" >> $GITHUB_ENV
 
       - name: Upload wheels
         if: env.upload == 'true'
         run: |
           pip install twine==6.0.1
-          for file in wheelhouse/*.whl; do
+          for file in dist/*.whl; do
             twine upload --repository-url https://gitlab.com/api/v4/projects/65746188/packages/pypi $file || true
           done
         env:
