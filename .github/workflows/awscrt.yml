@@ -68,6 +68,7 @@ jobs:
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
           CIBW_TEST_SKIP: "*"
+          CIBW_AUDIT_COMMAND: "ls -al {wheel}"
 
       - name: Check wheel
         run: |
