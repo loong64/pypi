@@ -62,14 +62,17 @@ jobs:
         uses: loong64/cibuildwheel@v4.3.5
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
-          CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
+          CIBW_BUILD: "cp310-${{ matrix.build }}${{ matrix.arch }}"
           CIBW_BEFORE_ALL_LINUX: >
             (apk add binutils patchelf gcc musl-dev 2>/dev/null || true) &&
             export DOWNLOAD_GOVERSION=$( grep '^go' core/go.mod | cut -d' ' -f2 ) &&
             curl -L https://golang.org/dl/go$DOWNLOAD_GOVERSION.linux-loong64.tar.gz > go.tar.gz &&
             tar -C /usr/local/ -xzf go.tar.gz &&
-            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain 1.98.0 &&
+            lld="$(/root/.cargo/bin/rustc --print target-libdir)/../bin/gcc-ld/ld.lld" &&
+            ln -sf "$lld" /usr/local/bin/ld.lld
           CIBW_ENVIRONMENT_LINUX: >
+            RUSTFLAGS="-C link-arg=-fuse-ld=lld"
             PATH=$PATH:/usr/local/go/bin:/root/.cargo/bin
             ${{ matrix.build == 'musllinux_' && 'WANDB_ENABLE_CGO=true' || '' }}
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
