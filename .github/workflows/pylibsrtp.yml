@@ -58,20 +58,16 @@ jobs:
         if: env.BUILD != 'false'
         uses: docker/setup-qemu-action@v4
 
-      - name: Prepare build
-        if: env.BUILD != 'false'
-        run: |
-          sed -i 's@github.com/aiortc/@github.com/loong64/@g' scripts/fetch-vendor.json
-
       - name: Build wheels
         if: env.BUILD != 'false'
         uses: loong64/cibuildwheel@v4.3.5
         env:
           CIBW_ARCHS: "${{ matrix.arch }}"
           CIBW_BUILD: "*-${{ matrix.build }}${{ matrix.arch }}"
-          CIBW_BEFORE_BUILD: python scripts/build-libsrtp.py /tmp/vendor
-          # CIBW_BEFORE_BUILD_WINDOWS: scripts\build-libsrtp.bat C:\cibw\vendor
-          CIBW_ENVIRONMENT: CFLAGS=-I/tmp/vendor/include LDFLAGS=-L/tmp/vendor/lib PKG_CONFIG_PATH=/tmp/vendor/lib/pkgconfig
+          CIBW_BEFORE_ALL_LINUX: (command -v yum && yum -y install perl-devel) || true
+          CIBW_BEFORE_BUILD: python scripts/build-vendor.py /tmp/vendor
+          # The vendored libsrtp supports cryptex, fail the build if it is missing.
+          CIBW_ENVIRONMENT: CFLAGS=-I/tmp/vendor/include LDFLAGS=-L/tmp/vendor/lib PYLIBSRTP_REQUIRE_CRYPTEX=1
           CIBW_ENVIRONMENT_PASS_LINUX: PIP_EXTRA_INDEX_URL UV_EXTRA_INDEX_URL UV_EXCLUDE_NEWER RUNNER_ARCH
           CIBW_SKIP: 'cp3??t-*'
           # CIBW_TEST_COMMAND: python -m unittest discover -s {project}/tests
