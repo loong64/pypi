@@ -11,12 +11,6 @@ on:
   schedule:
     - cron: '0 15 * * *'
 
-env:
-  PIP_BREAK_SYSTEM_PACKAGES: "1"
-  LIBPQ_VERSION: "17.11"
-  OPENSSL_VERSION: "3.5.8"
-  PQ_FLAGS: ""
-
 jobs:
   build_wheels:
     name: Build ${{ matrix.platform }}_${{ matrix.arch }} wheels on ubuntu-24.04
@@ -66,6 +60,16 @@ jobs:
         with:
           repository: psycopg/psycopg2
           ref: ${{ env.VERSION }}
+
+      - name: Prepare libraries
+        if: env.BUILD != 'false'
+        run: |
+          LIBPQ_VERSION=$(awk -F'"' '/LIBPQ_VERSION:/ {print $2}' .github/workflows/packages.yml)
+          OPENSSL_VERSION=$(awk -F'"' '/OPENSSL_VERSION:/ {print $2}' .github/workflows/packages.yml)
+          PQ_FLAGS=$(awk -F'"' '/PQ_FLAGS:/ {print $2}' .github/workflows/packages.yml)
+          echo "LIBPQ_VERSION=${LIBPQ_VERSION}" >> $GITHUB_ENV
+          echo "OPENSSL_VERSION=${OPENSSL_VERSION}" >> $GITHUB_ENV
+          echo "PQ_FLAGS=${PQ_FLAGS}" >> $GITHUB_ENV
 
       - name: Setup QEMU
         if: env.BUILD != 'false'
