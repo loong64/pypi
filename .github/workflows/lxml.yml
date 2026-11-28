@@ -56,10 +56,10 @@ jobs:
       - name: Prepare libraries
         if: env.BUILD != 'false'
         run: |
-          ZLIB_VERSION=$(awk -F'"' '/ZLIB_VERSION:/ {print $2}' .github/workflows/wheels.yml)
-          LIBICONV_VERSION=$(awk -F'"' '/LIBICONV_VERSION:/ {print $2}' .github/workflows/wheels.yml)
-          LIBXML2_VERSION=$(awk -F'"' '/LIBXML2_VERSION:/ {print $2}' .github/workflows/wheels.yml)
-          LIBXSLT_VERSION=$(awk -F'"' '/LIBXSLT_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          ZLIB_VERSION=$(awk -F'"' '/^[[:space:]]*ZLIB_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          LIBICONV_VERSION=$(awk -F'"' '/^[[:space:]]*LIBICONV_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          LIBXML2_VERSION=$(awk -F'"' '/^[[:space:]]*LIBXML2_VERSION:/ {print $2}' .github/workflows/wheels.yml)
+          LIBXSLT_VERSION=$(awk -F'"' '/^[[:space:]]*LIBXSLT_VERSION:/ {print $2}' .github/workflows/wheels.yml)
           echo "ZLIB_VERSION=${ZLIB_VERSION}" >> $GITHUB_ENV
           echo "LIBICONV_VERSION=${LIBICONV_VERSION}" >> $GITHUB_ENV
           echo "LIBXML2_VERSION=${LIBXML2_VERSION}" >> $GITHUB_ENV
